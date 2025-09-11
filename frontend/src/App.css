@@ -1,0 +1,13 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1;
+  overflow: hidden; /* prevent double scrollbars */
+  margin-top: var(--nav-height); /* space below navbar */
+}

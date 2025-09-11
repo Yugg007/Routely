@@ -1,0 +1,104 @@
+/* Just move navbar styles here */
+.rd-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eef4ff;
+  z-index: 120;
+  padding: 0 22px;
+  box-shadow: 0 6px 18px rgba(9,12,28,0.04);
+}
+
+.rd-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.rd-topnav {
+  display: flex;
+  gap: 8px;
+  margin-left: 18px;
+}
+
+.rd-nav-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.rd-nav-btn.active {
+  color: var(--primary);
+  background: #f1f5ff;
+}
+
+
+
+
+/* brand */
+.rd-brand {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.rd-logo {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #2746d9, #4a63e7);
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 800;
+    box-shadow: 0 8px 22px rgba(74, 99, 231, 0.18);
+}
+
+.rd-title {
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.2px;
+}
+
+
+
+.rd-nav-btn.active,
+.rd-nav-btn:hover {
+    color: var(--primary);
+    background: #f1f5ff;
+}
+
+/* right actions */
+.rd-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.rd-status {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.rd-profile {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: #eef2ff;
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+}

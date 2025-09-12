@@ -57,6 +57,10 @@ spring:
             - Path=/api/bookings/**
           filters:
             - StripPrefix=1
+        - id: ingestion-service
+          uri: lb://INGESTION-SERVICE
+          predicates:
+          - Path=/ws/location/**
       httpclient:
         use-forward-headers:true
       discovery:

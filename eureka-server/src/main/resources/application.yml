@@ -2,10 +2,13 @@ server:
   port: 8761
   ssl:
     enabled: true
-    key-store: file:/C:/Users/yogen/Desktop/coding/Projects/Routely/SSLCertificate/eureka-server-keystore.p12
+    key-store: src/main/resources/eureka-server-keystore.p12
     key-store-password: iampass
     key-store-type: PKCS12
     key-alias: eureka-server
+    trust-store: src/main/resources/truststore.p12
+    trust-store-password: iampass
+    trust-store-type: PKCS12		
 
 spring:
   application:

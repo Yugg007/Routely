@@ -8,8 +8,9 @@ import Navbar from "./Component/Navbar/Navbar";
 import Profile from "./Component/Profile/Profile";
 import { BackendService } from "./Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "./Utils/Api's/ApiEndpoints";
+import Help from "./Component/Help";
 
-export default function App() {
+export default function App() {  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const authStatus = async () => {
@@ -50,7 +51,7 @@ export default function App() {
           <Routes>
             <Route exact path="/" element={<Dashboard />} />
             <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} onLogin={onLogin} handleLogout={handleLogout}/>} />
-
+            <Route path="/help" element={<Help />} />
           </Routes>
         </div>
       </div>

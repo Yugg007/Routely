@@ -22,6 +22,9 @@ target/
 *.war
 *.ear
 *.iml
+*.yml
+*.yaml
+
 
 # ---- Spring Boot ----
 /bin/
@@ -56,3 +59,6 @@ Thumbs.db
 
 Others/
 .metadata/
+
+graphhopper/
+SSLCertificate/

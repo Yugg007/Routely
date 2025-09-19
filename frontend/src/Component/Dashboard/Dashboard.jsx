@@ -185,6 +185,11 @@ export default function Dashboard() {
     }, 180);
   }
 
+  useEffect(() => {
+    return () => clearTimeout(matchTimer.current);
+  }
+  , [pickup, drop]);
+
   return (
     <main className="rd-main" role="main">
       {/* Map */}
@@ -283,7 +288,7 @@ export default function Dashboard() {
 
         {/* Actions */}
         <div className="rd-cta-row">
-          <button className="btn btn-ghost" onClick={() => { setPickup(null); setDrop(null); setPickupQuery(""); setDropQuery(""); setPickupSuggestions([]); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
+          <button className="btn btn-ghost" onClick={() => {setDrop(null); setDropQuery(""); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
           <button className="btn btn-primary btn-request" disabled={!(pickup && drop) || findingDriver} onClick={requestRide}>{findingDriver ? "Searching…" : "Request Ride"}</button>
           {matchedDriver && <button className="btn btn-success" onClick={() => setStatus("Driver on the way!")}>Driver Arriving</button>}
         </div>

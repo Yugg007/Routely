@@ -1,201 +1,236 @@
-/* ========== AuthPage.css ==========
-   Adjusted for fixed Navbar at the top.
-   Added top padding to .routely-page so content clears navbar height (assumed ~64px).
-*/
-
-/* Page */
-.routely-page {
-  min-height: calc(100vh - 64px);
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: calc(2.25rem + 64px) 2.25rem 2.25rem;
-  background: linear-gradient(180deg, #f6f9ff 0%, #ffffff 100%);
+/* ================== Global ================== */
+* {
   box-sizing: border-box;
-  overflow-y: auto; /* ✅ */
+}
+
+/* ================== Container ================== */
+.auth-modern-container,
+.app-modern-container {
+  display: flex;
+  background: linear-gradient(180deg,#f3f4f6,#ffffff);
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 3rem;
+  width: 100%;
+}
+
+.profile-modern-container {
+  margin-top: 40px;
 }
 
 
-
-
-/* Card */
-.routely-card {
+/* ================== Auth Card ================== */
+.auth-modern-left {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   background: #fff;
   border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 12px 30px rgba(18, 24, 40, 0.08);
+  padding: 2rem 2rem 3rem;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem; /* ensures slight breathing room below navbar */
+  gap: 1.5rem;
+  position: relative;
 }
 
-/* Loader */
-.routely-loader {
-  padding: 1rem 1.5rem;
-  background: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 6px 18px rgba(18,24,40,0.06);
-  font-weight: 500;
-}
-
-/* Header / Profile */
-.routely-profileHeader {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.routely-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.auth-modern-brand h1 {
+  font-size: 2rem;
   font-weight: 700;
-  font-size: 1.25rem;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-  color: white;
-  flex: 0 0 64px;
-}
-
-.routely-name {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
+  background: linear-gradient(90deg,#2563eb,#06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.routely-email {
-  margin: 0.15rem 0 0 0;
+.auth-modern-brand p {
   color: #6b7280;
   font-size: 0.95rem;
-}
-
-.routely-muted {
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.routely-profileActions {
   margin-top: 0.25rem;
 }
 
-.routely-actionRow {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-/* Form */
-.routely-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.routely-form {
+/* ================== Form ================== */
+.auth-modern-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.routely-fieldLabel {
-  display: block;
-  margin-bottom: 0.35rem;
+.form-field {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.form-field label {
   font-weight: 600;
-  color: #111827;
   font-size: 0.95rem;
+  color: #111827;
+  margin-bottom: 0.25rem;
 }
 
-.routely-input {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
+.form-field input {
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #e6e9ef;
-  font-size: 0.975rem;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
   outline: none;
+  transition: all 0.2s ease;
 }
 
-.routely-input:focus {
-  box-shadow: 0 4px 14px rgba(99,102,241,0.12);
+.form-field input:focus {
   border-color: #6366f1;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.2);
 }
 
-.routely-error {
+/* ================== Password Toggle ================== */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 2.5rem; /* space for eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.password-toggle:hover {
+  color: #111827;
+}
+
+/* ================== Error ================== */
+.form-error {
   color: #b91c1c;
-  background: rgba(185,28,28,0.04);
+  background: rgba(185,28,28,0.05);
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   font-size: 0.95rem;
 }
 
-/* Buttons */
+/* ================== Buttons ================== */
 .btn {
-  padding: 0.6rem 0.9rem;
+  padding: 0.75rem;
   border-radius: 0.6rem;
-  border: 0;
-  cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
 }
 
-.btn:disabled,
-.btn[aria-disabled='true'] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary,
-.btn.btn-primary {
+.btn-primary {
   background: linear-gradient(90deg,#2563eb,#06b6d4);
-  color: white;
-  box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
 }
 
 .btn-ghost {
   background: transparent;
+  border: 1px solid #e5e7eb;
   color: #374151;
-  border: 1px solid #e6e9ef;
 }
 
-.btn-link,
-.btn.btn-link {
-  background: transparent;
-  color: #2563eb;
-  padding: 0.45rem 0.6rem;
-  font-weight: 600;
+.btn-ghost:hover {
+  background: #f9fafb;
 }
 
 .btn-inline {
   background: transparent;
-  color: #2563eb;
   border: none;
-  padding: 0;
-  font-weight: 700;
+  color: #2563eb;
   cursor: pointer;
+  font-weight: 600;
 }
 
-/* Footer */
-.routely-footer {
-  margin-top: 0.5rem;
-  text-align: left;
+/* ================== Auth Switch ================== */
+.auth-switch {
+  margin-top: 1rem;
+  font-size: 0.9rem;
   color: #6b7280;
 }
 
-/* Responsive tweaks */
-@media (max-width: 420px) {
-  .routely-card {
-    padding: 1rem;
-    border-radius: 0.75rem;
-  }
-  .routely-avatar {
-    width: 56px;
-    height: 56px;
-  }
+/* ================== Profile ================== */
+.profile-modern-container {
+  width: 100%;
+  max-width: 450px;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 2rem 3rem;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* End of CSS */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.profile-info p {
+  margin: 0.2rem 0 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.profile-actions p {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.profile-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* ================== Responsive ================== */
+@media (max-width: 480px) {
+  .auth-modern-left, .profile-modern-container {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+  }
+}

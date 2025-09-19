@@ -1,156 +1,211 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BackendService } from "../../Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "../../Utils/Api's/ApiEndpoints";
+import { Eye, EyeOff } from "lucide-react";
+import './Profile.css';
+import { storeLogin } from "../../store/feature";
+import { useDispatch } from "react-redux";
 
-
-export default function LoginView({ onLogin }) {
-    const [mobileNo, setMobileNo] = useState('');
-    const [email, setEmail] = useState('Test1@1234');
-    const [password, setPassword] = useState('Test@1234');
+export default function LoginView() {
+    const dispatch = useDispatch();
+    const [name, setName] = useState("");
+    const [mobileNo, setMobileNo] = useState("");
+    const [email, setEmail] = useState("Test1@gmail.com");
+    const [password, setPassword] = useState("Test@1234");
+    const [showPassword, setShowPassword] = useState(false);
+    const [reEnterPassword, setReEnterPassword] = useState("Test@1234");
+    const [showReEnterPassword, setShowReEnterPassword] = useState(false);
+    const [isDriver, setIsDriver] = useState(false);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [forLogin, setForLogin] = useState(true);
+
+    useEffect(() => {
+        if (name || email || password || reEnterPassword || isDriver || mobileNo) {
+            setError("");
+        }
+    }, [name, email, password, reEnterPassword, isDriver, mobileNo])
 
     const submit = async (e) => {
         e.preventDefault();
         setError(null);
 
-        if ((!mobileNo || mobileNo.length !== 10) && !forLogin) {
-            setError('Please provide a valid 10-digit mobile number.');
+        if (!forLogin && !name) {
+            setError("Please provide your full name.")
             return;
         }
 
-        if (!email ) {
-            setError('Please provide a valid email address.');
+        if (!forLogin && (!mobileNo || mobileNo.length !== 10)) {
+            setError("Please provide a valid 10-digit mobile number.");
             return;
         }
-
+        if (!testEmail(email)) {
+            setError("Please provide a valid email address.");
+            return;
+        }
         if (!password || password.length < 6) {
-            setError('Password must be at least 8 characters long.');
+            setError("Password must be at least 6 characters long.");
+            return;
+        }
+        if (!forLogin && password !== reEnterPassword) {
+            setError("Both password should match.");
             return;
         }
 
-        // setLoading(true);
         try {
+            setLoading(true);
             const url = forLogin ? ApiEndpoints.login : ApiEndpoints.register;
-            const body = forLogin ? { email, password } : { mobileNo, email, password };
+            const body = forLogin ? { email, password } : { mobileNo, email, password, name, isDriver };
+            console.log("Body for auth - ", body);
             const response = await BackendService(url, body);
-            if (response) {
-                onLogin(email);
+            if (response.data.authStatus) {
+                dispatch(storeLogin(response.data));
             }
         } catch (err) {
             console.error(err);
-            setError('Sign in failed. Please try again.');
+            setError(err.response?.data?.message || "Sign in failed. Please try again.");
         } finally {
-            // setLoading(false);
+            setLoading(false);
         }
     };
 
+    const testEmail = (value) => {
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
+    }
+
     const handleMobileNoChange = (e) => {
         const value = e.target.value;
-        // Allow only digits and limit to 10 characters
-        if (/^\d{0,10}$/.test(value)) {
-            setMobileNo(value);
+        if (/^\d{0,10}$/.test(value)) setMobileNo(value);
+    };
+
+    const handleNameChange = (e) => {
+        const value = e.target.value;
+        if (typeof value === 'string') {
+            setName(value);
         }
     }
 
     return (
-        <main className="routely-card" aria-labelledby="login-heading">
-            <h2 id="login-heading" className="routely-title">Welcome back to Routely</h2>
+        <div className="auth-modern-container">
+            <div className="auth-modern-left">
+                <div className="auth-modern-brand">
+                    <h1>Routely</h1>
+                    <p>{forLogin ? "Sign in to your account" : "Create your Routely account"}</p>
+                </div>
+                <form className="auth-modern-form" onSubmit={submit}>
+                    {!forLogin && (
+                        <div className="form-field">
+                            <label>Your Name</label>
+                            <input
+                                type="text"
+                                placeholder="John Woe"
+                                value={name}
+                                onChange={handleNameChange}
+                            />
+                        </div>
+                    )}
+                    {!forLogin && (
+                        <div className="form-field">
+                            <label>Mobile Number(10 digit)</label>
+                            <input
+                                type="text"
+                                placeholder="9876543210"
+                                value={mobileNo}
+                                onChange={handleMobileNoChange}
+                            />
+                        </div>
+                    )}
 
-            <form className="routely-form" onSubmit={submit} noValidate>
-                {
-                    !forLogin &&
-                    <label className="routely-field">
-                        <span className="routely-fieldLabel">Mobile No</span>
+                    <div className="form-field">
+                        <label>Email</label>
                         <input
-                            className="routely-input"
-                            type="number"
-                            name="mobile"
-                            required
-                            value={mobileNo}
-                            onChange={handleMobileNoChange}
-                            placeholder="9876543210"
-                            aria-label="Mobile No"
-                        />
-                    </label>
-                }
-                <label className="routely-field">
-                    <span className="routely-fieldLabel">Email</span>
-                    <input
-                        className="routely-input"
-                        type="email"
-                        name="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        aria-label="Email address"
-                    />
-                </label>
-
-
-                {/* {
-                    !forLogin
-                    &&
-                    <label className="routely-field">
-                        <span className="routely-fieldLabel">First</span>
-                        <input
-                            className="routely-input"
                             type="email"
-                            name="email"
-                            required
+                            placeholder="you@company.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@company.com"
-                            aria-label="Email address"
                         />
-                    </label>
-                }                 */}
-
-                <label className="routely-field">
-                    <span className="routely-fieldLabel">Password</span>
-                    <input
-                        className="routely-input"
-                        type="password"
-                        name="password"
-                        required
-                        minLength={6}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="6+ characters"
-                        aria-label="Password"
-                    />
-                </label>
-
-                {error && (
-                    <div className="routely-error" role="alert">
-                        {error}
                     </div>
-                )}
 
-                <div className="routely-actions">
-                    <button className="btn btn-primary" type="submit" disabled={loading} aria-disabled={loading}>
-                        {forLogin ? 'Sign in' : 'Create account'}
+                    <div className="form-field password-field">
+                        <label>Password</label>
+                        <div className="password-input-wrapper">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="6+ characters"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {!forLogin && (
+                        <>
+                            <div className="form-field password-field">
+                                <label>Re-Enter Password</label>
+                                <div className="password-input-wrapper">
+                                    <input
+                                        type={showReEnterPassword ? "text" : "password"}
+                                        placeholder="6+ characters"
+                                        value={reEnterPassword}
+                                        onChange={(e) => setReEnterPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => setShowReEnterPassword((prev) => !prev)}
+                                    >
+                                        {showReEnterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Terms and Conditions */}
+                            <div className="form-field checkbox-field">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={isDriver}
+                                        onChange={(e) => setIsDriver(e.target.checked)}
+                                    />
+                                    <span>I am registering as <a href="/terms" target="_blank">Driver</a></span>
+                                </label>
+                            </div>
+                        </>
+                    )}
+
+                    {error && <div className="form-error">{error}</div>}
+
+                    <button className="btn btn-primary" type="submit" disabled={loading}>
+                        {loading ? "Please wait…" : forLogin ? "Sign In" : "Create Account"}
                     </button>
+                </form>
 
-                    {/* <button type="button" className="btn btn-link" onClick={() => alert('Forgot password flow')}>
-            Forgot password?
-          </button> */}
+                <div className="auth-switch">
+                    {forLogin ? (
+                        <>
+                            New to Routely?{" "}
+                            <button onClick={() => setForLogin(false)} className="btn-inline">
+                                Create account
+                            </button>
+                        </>
+                    ) : (
+                        <button onClick={() => setForLogin(true)} className="btn-inline">
+                            Already have an account? Sign in
+                        </button>
+                    )}
                 </div>
-            </form>
+            </div>
 
-            <footer className="routely-footer">
-                <small>
-                    {
-                        forLogin
-                            ?
-                            <>New to Routely? <button className="btn btn-inline" onClick={() => setForLogin(false)}>Create an account</button></>
-                            :
-                            <button className="btn btn-inline" onClick={() => setForLogin(true)}>Already have an account?</button>
-                    }
-                </small>
-            </footer>
-        </main>
+            <div className="auth-modern-right">
+                {/* Illustration / Graphic */}
+            </div>
+        </div>
     );
 }

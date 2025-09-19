@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { storeLogin } from "./store/feature";
 
 
 import "./App.css";
@@ -9,36 +10,27 @@ import Profile from "./Component/Profile/Profile";
 import { BackendService } from "./Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "./Utils/Api's/ApiEndpoints";
 import Help from "./Component/Help";
+import { useDispatch, useSelector } from "react-redux";
 
-export default function App() {  
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export default function App() {
+  const dispatch = useDispatch();
 
   const authStatus = async () => {
-    const response = await BackendService(ApiEndpoints.authStatus);
-    if (response && response.data) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-  }
-
-  const onLogin = (email) => {
-    localStorage.setItem("email", email);
-    setIsLoggedIn(true);
-  }
-
-  const handleLogout = async () => {
-    const response = await BackendService(ApiEndpoints.logout, {});
-    if (response) {
-      alert("Logged out successfully.");
-      setIsLoggedIn(false);
-      localStorage.removeItem("email");
+    try {
+      const response = await BackendService(ApiEndpoints.authStatus);
+      if (response?.data) {
+        dispatch(storeLogin(response.data));
+      } else {
+        console.warn("Auth status response is empty or malformed:", response);
+      }
+    } catch (error) {
+      console.error("Failed to fetch auth status:", error);
     }
   }
 
   useEffect(() => {
     authStatus();
-  }, []);
+  }, [dispatch ]);
 
   return (
     <Router>
@@ -50,10 +42,20 @@ export default function App() {
         <div className="app-content">
           <Routes>
             <Route exact path="/" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} onLogin={onLogin} handleLogout={handleLogout}/>} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/help" element={<Help />} />
           </Routes>
         </div>
+        <footer className="app-footer">
+          <div className="footer-content">
+            <p>&copy; {new Date().getFullYear()} Routely. All rights reserved.</p>
+            <div className="footer-links">
+              <a href="/terms">Terms</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/contact">Contact</a>
+            </div>
+          </div>
+        </footer>
       </div>
     </Router>
   );

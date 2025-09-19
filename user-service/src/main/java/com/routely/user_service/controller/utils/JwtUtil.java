@@ -1,12 +1,15 @@
 package com.routely.user_service.controller.utils;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Component;
+
+import com.routely.user_service.dto.AuthResponse;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
@@ -59,10 +62,6 @@ public class JwtUtil {
 		return builder.compact();
 	}
 
-	// Overloaded generateToken for simple username only
-	public String generateToken(String username) {
-		return generateToken(username, Map.of());
-	}
 
 	// Validate token
 	public boolean validateToken(String token, String username) {
@@ -89,5 +88,31 @@ public class JwtUtil {
 	public Object getClaimValue(String token, String key) {
 		Claims claims = extractAllClaims(token);
 		return claims.get(key);
+	}
+
+	public String generateToken(AuthResponse authResponse) {
+		Map<String, String> claims = new HashMap<>();
+		claims.put("name", authResponse.getName());
+		claims.put("email", authResponse.getEmail());
+		claims.put("mobileNo", authResponse.getMobileNo());
+		claims.put("isDriver", authResponse.getIsDriver());
+		JwtBuilder builder = Jwts.builder()
+				.setClaims(claims)
+				.setSubject(authResponse.getEmail())
+				.setIssuedAt(new Date())
+				.setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+				.signWith(getSecretKey(), SignatureAlgorithm.HS256);
+
+		return builder.compact();
+	}
+
+	public AuthResponse extractClaims(String token) {
+		AuthResponse authResponse = new AuthResponse();
+		Claims claims = extractAllClaims(token);
+		authResponse.setName((String) claims.get("name"));
+		authResponse.setEmail((String) claims.get("email"));
+		authResponse.setMobileNo((String) claims.get("mobileNo"));
+		authResponse.setIsDriver((String) claims.get("isDriver"));
+		return authResponse;
 	}
 }

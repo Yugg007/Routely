@@ -1,6 +1,7 @@
 // Functionality.js
 // Core business logic for Routely Dashboard (Google Maps implementation)
 
+//Predefined ride categories (Bike, Auto, Car, Premier)
 export const RIDE_TYPES = [
   { id: "bike", name: "Bike", emoji: "🚲", base: 20, per_km: 6, eta_min: 2 },
   { id: "auto", name: "Auto", emoji: "🛺", base: 30, per_km: 8, eta_min: 4 },
@@ -9,6 +10,8 @@ export const RIDE_TYPES = [
 ];
 
 // ----------------- Utilities -----------------
+
+//shortest distance between two latitude/longitude points
 export function haversineDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const toRad = (v) => (v * Math.PI) / 180;
@@ -22,20 +25,28 @@ export function haversineDistanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+//calculate fare based on distance and ride type
 export function calcFare(distanceKm, rideType) {
   return Math.max(1, Math.round(rideType.base + rideType.per_km * distanceKm));
 }
 
+//format number as Indian Rupees
 export function formatINR(n) {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
+//determine travel mode for Google Maps API based on ride type
 export function travelModeForRide(id) {
   if (id === "bike") return window.google ? window.google.maps.TravelMode.BICYCLING : "BICYCLING";
   return window.google ? window.google.maps.TravelMode.DRIVING : "DRIVING";
 }
 
+
 // ----------------- Google APIs -----------------
+
+//Initializes Google Maps services if available:
+// AutocompleteService → for address suggestions.
+// Geocoder → for forward & reverse geocoding.
 export function initGoogleServices() {
   if (window.google) {
     return {
@@ -46,6 +57,10 @@ export function initGoogleServices() {
   return { autocompleteService: null, geocoder: null };
 }
 
+
+// Converts latitude/longitude → human-readable address.
+// Uses Google’s geocode API.
+// Example: (22.7, 75.9) → "Indore, Madhya Pradesh, India".
 export function reverseGeocode(geocoder, loc, callback) {
   if (!geocoder) return;
   geocoder.geocode({ location: { lat: loc.lat, lng: loc.lng } }, (results, status) => {
@@ -55,6 +70,9 @@ export function reverseGeocode(geocoder, loc, callback) {
   });
 }
 
+// Fetches place predictions based on user input.
+// Uses Google’s autocomplete API.
+// Example: "Indo" → ["Indore, Madhya Pradesh, India", "Indore Airport, India", ...]
 export function searchPlaces(service, input, center, currentSuggestion, cb) {
   if (!input || !service) {
     cb(currentSuggestion ? [currentSuggestion] : []);
@@ -77,6 +95,9 @@ export function searchPlaces(service, input, center, currentSuggestion, cb) {
   });
 }
 
+// Converts a Google Place ID → latitude/longitude + formatted address.
+// Uses Google’s geocode API.
+// Example: "ChIJW6A6MGf1DTkR7a5YI3s0fTA" → { lat: 22.7, lng: 75.9, label: "Indore, Madhya Pradesh, India" }
 export function geocodePlaceId(geocoder, placeId, cb) {
   if (!geocoder) return;
   geocoder.geocode({ placeId }, (results, status) => {
@@ -90,6 +111,9 @@ export function geocodePlaceId(geocoder, placeId, cb) {
   });
 }
 
+// Computes the best route between two locations using Google’s directions API.
+// Falls back to straight-line distance if route computation fails.
+// Example: ({lat:22.7,lng:75.9}, {lat:19.1,lng:72.8}, "car", cb, fallbackCb)
 export function computeGoogleRoute(pickup, drop, rideTypeId, cb, fallbackCb) {
   const ds = new window.google.maps.DirectionsService();
   const mode = travelModeForRide(rideTypeId);

@@ -1,33 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import './Profile.css';
-import ProfileView from './ProfileView';
-import LoginView from './LoginView';
+import React, { useEffect, useState } from "react";
+import ProfileView from "./ProfileView";
+import LoginView from "./LoginView";
+import "./Profile.css";
+import { useSelector } from "react-redux";
 
-export default function Profile({ isLoggedIn, onLogin, handleLogout }) {
-  const [isChecking, setIsChecking] = useState(false);  
-  const [user, setUser] = useState(null);
-
-  const handleLogin = (email) => {
-    onLogin(email);
-  };
-
-
-  if (isChecking) {
-    return (
-      <div className="routely-page">
-        <div className="routely-loader" aria-live="polite">Checking authentication…</div>
-      </div>
-    );
-  }
+export default function Profile() {
+  const isLoggedIn = useSelector((state) => state?.auth?.isLoggedIn);
 
   return (
-    <div className="routely-page">
+    <div className="app-modern-container">
       {isLoggedIn ? (
-        <ProfileView user={user} onLogout={handleLogout} />
+        <ProfileView  />
       ) : (
-        <LoginView onLogin={handleLogin} />
+        <LoginView />
       )}
     </div>
   );
 }
-

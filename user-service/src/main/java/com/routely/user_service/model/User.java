@@ -20,7 +20,10 @@ public class User {
     private String mobileNo;
 
     @Column(nullable = false, length = 50)
-    private String firstName;
+    private String name;
+    
+    @Column
+    private String isDriver;
 
     // ✅ Default constructor (required by JPA)
     public User() {}
@@ -31,7 +34,7 @@ public class User {
         this.email = builder.email;
         this.password = builder.password;
         this.mobileNo = builder.mobileNo;
-        this.firstName = builder.firstName;
+        this.name = builder.name;
     }
 
     // ✅ Builder Pattern
@@ -40,7 +43,8 @@ public class User {
         private String email;
         private String password;
         private String mobileNo;
-        private String firstName;
+        private String name;
+        private String isDriver;
 
         public Builder id(Long id) {
             this.id = id;
@@ -62,14 +66,27 @@ public class User {
             return this;
         }
 
-        public Builder firstName(String firstName) {
-            this.firstName = firstName;
+        public Builder name(String name) {
+            this.name = name;
             return this;
+        }
+        
+        public Builder isDriver(String isDriver) {
+        	this.isDriver = isDriver;
+        	return this;
         }
 
         public User build() {
             return new User(this);
         }
+
+		public String getIsDriver() {
+			return isDriver;
+		}
+
+		public void setIsDriver(String isDriver) {
+			this.isDriver = isDriver;
+		}
     }
 
     // ✅ Getters & Setters
@@ -105,11 +122,20 @@ public class User {
         this.mobileNo = mobileNo;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getIsDriver() {
+		return isDriver;
+	}
+
+	public void setIsDriver(String isDriver) {
+		this.isDriver = isDriver;
+	}
+
 }

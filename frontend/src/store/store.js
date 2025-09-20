@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userReducer from "./feature";
+import userReducer from "./authCacheSlice";
+import routeCacheReducer from "./routeCacheSlice";
 
 
 export const store = configureStore({
     reducer : {
-        auth : userReducer
+        auth : userReducer,
+        routeCache : routeCacheReducer
     }
 })

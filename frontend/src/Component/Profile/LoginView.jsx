@@ -3,7 +3,7 @@ import { BackendService } from "../../Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "../../Utils/Api's/ApiEndpoints";
 import { Eye, EyeOff } from "lucide-react";
 import './Profile.css';
-import { storeLogin } from "../../store/feature";
+import { storeLogin } from "../../store/authCacheSlice";
 import { useDispatch } from "react-redux";
 
 export default function LoginView() {

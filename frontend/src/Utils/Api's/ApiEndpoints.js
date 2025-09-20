@@ -7,7 +7,10 @@ const ApiEndpoints = {
     "addVehicle" : "/users/addVehicle",
     "updateVehicle" : "users/updateVehicle",
     "deleteVehicle" : "users/deleteVehicle",
-    "fetchVehicles" : "/users/fetchVehicles"
+    "fetchVehicles" : "/users/fetchVehicles",
+
+
+    "estimateFare" : "/trips/estimateFare"
 }
 
 export default ApiEndpoints;

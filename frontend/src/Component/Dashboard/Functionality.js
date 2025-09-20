@@ -3,7 +3,7 @@
 
 //Predefined ride categories (Bike, Auto, Car, Premier)
 export const RIDE_TYPES = [
-  { id: "bike", name: "Bike", emoji: "🚲", base: 20, per_km: 6, eta_min: 2 },
+  // { id: "bike", name: "Bike", emoji: "🚲", base: 20, per_km: 6, eta_min: 2 },
   { id: "auto", name: "Auto", emoji: "🛺", base: 30, per_km: 8, eta_min: 4 },
   { id: "car", name: "Car", emoji: "🚗", base: 50, per_km: 10, eta_min: 6 },
   { id: "premier", name: "Premier", emoji: "🚘", base: 120, per_km: 18, eta_min: 8 },
@@ -114,6 +114,8 @@ export function geocodePlaceId(geocoder, placeId, cb) {
 // Falls back to straight-line distance if route computation fails.
 // Example: ({lat:22.7,lng:75.9}, {lat:19.1,lng:72.8}, "car", cb, fallbackCb)
 export function computeGoogleRoute(pickup, drop, rideTypeId, cb, fallbackCb) {
+  console.log("computeGoogleRoute called with:", pickup, drop, rideTypeId);
+  
   const ds = new window.google.maps.DirectionsService();
   const mode = travelModeForRide(rideTypeId);
 

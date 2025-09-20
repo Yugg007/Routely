@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ApiEndpoints from "../../Utils/Api's/ApiEndpoints";
 import { BackendService } from "../../Utils/Api's/ApiMiddleWare";
-import { storeLogout } from "../../store/feature";
+import { storeLogout } from "../../store/authCacheSlice";
 import "./Profile.css";
 
 export default function ProfileView() {

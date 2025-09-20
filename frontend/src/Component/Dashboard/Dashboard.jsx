@@ -13,8 +13,15 @@ import {
   geocodePlaceId,
   computeGoogleRoute,
 } from "./Functionality";
+import { useDispatch, useSelector } from "react-redux";
+import { cacheRoute } from "../../store/routeCacheSlice";
+import { BackendService } from "../../Utils/Api's/ApiMiddleWare";
+import ApiEndpoints from "../../Utils/Api's/ApiEndpoints";
 
 export default function Dashboard() {
+  const dispatch = useDispatch();
+  const routeCache = useSelector((state) => state?.routeCache?.routes || {});
+  console.log("Current routeCache from Redux:", routeCache);
   const FALLBACK = { lat: 12.9716, lng: 77.5946 };
 
   const [center, setCenter] = useState(FALLBACK);
@@ -31,6 +38,7 @@ export default function Dashboard() {
   const [findingDriver, setFindingDriver] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState(null);
   const [routePath, setRoutePath] = useState(null);
+  const [estimatedFare, setEstimatedFare] = useState(0);
 
   const mapRef = useRef(null);
   const serviceRef = useRef(null);
@@ -42,7 +50,7 @@ export default function Dashboard() {
     libraries: ["places"],
   });
 
-  // init google services
+  // init google services for address suggestion and forward/reverse geocoding(lat/lng ↔ address)
   useEffect(() => {
     if (isLoaded && window.google) {
       const { autocompleteService, geocoder } = initGoogleServices();
@@ -68,10 +76,43 @@ export default function Dashboard() {
     }
   }, [isLoaded]);
 
+  const savedToRouteCache = (path, dkm, mins, bounds) => {
+    const data = {
+      routePath: path,
+      distanceKm: dkm,
+      durationMin: mins,
+      bounds: bounds
+    };
+
+    dispatch(cacheRoute({ pickup, drop, rideTypeId, data }));
+  }
+
+  const setValuesToStates = (path, dkm, mins, bounds) => {
+    setRoutePath(path);
+    setDistanceKm(Number(dkm.toFixed(2)));
+    setEtaMin(mins);
+    setTimeout(() => {
+      if (mapRef.current && bounds) {
+        try {
+          mapRef.current.fitBounds(bounds);
+        } catch (e) { }
+      }
+    }, 80);
+    calculateFare(dkm, mins, "car");
+  }
+
   // compute route
   useEffect(() => {
     if (!pickup || !drop || !isLoaded || !window.google) {
-      setRoutePath(null);
+      return;
+    }
+
+
+    const key = `${pickup.lat},${pickup.lng}_${drop.lat},${drop.lng}_${rideTypeId}`;
+    if (routeCache[key]) {
+      console.log("Route from cache:", routeCache[key]);
+      const { routePath, distanceKm, durationMin, bounds } = routeCache[key];
+      setValuesToStates(routePath, distanceKm, durationMin, bounds);
       return;
     }
 
@@ -80,25 +121,15 @@ export default function Dashboard() {
       drop,
       rideTypeId,
       (path, dkm, mins, bounds) => {
-        setRoutePath(path);
-        setDistanceKm(Number(dkm.toFixed(2)));
-        setEtaMin(mins);
-
-        setTimeout(() => {
-          if (mapRef.current && bounds) {
-            try {
-              mapRef.current.fitBounds(bounds);
-            } catch (e) { }
-          }
-        }, 80);
+        setValuesToStates(path, dkm, mins, bounds);
+        savedToRouteCache(path, dkm, mins, bounds);
       },
       (dkm, mins, path) => {
-        setDistanceKm(Number(dkm.toFixed(2)));
-        setEtaMin(mins);
-        setRoutePath(path);
+        setValuesToStates(path, dkm, mins, null);
+        savedToRouteCache(path, dkm, mins, null);
       }
     );
-  }, [pickup, drop, rideTypeId, isLoaded]);
+  }, [pickup, drop, isLoaded]);
 
   // handle place search
   function handlePlaceSearch(input, type) {
@@ -176,8 +207,29 @@ export default function Dashboard() {
     setStatus("");
   }
 
+  const calculateFare = async (distanceKm, durationMin, chosenRide) => {
+    console.log("Calculating fare for", distanceKm, "km,", durationMin, "min, ride:", chosenRide);  
+
+    try {
+      const body = {
+        distanceKm,
+        durationMin,
+        rideType: chosenRide
+      }
+      const response = await BackendService(ApiEndpoints.estimateFare, body);
+      if (response.data && response.data?.estimatedFare) {
+        setEstimatedFare(response.data.estimatedFare);
+      }
+
+    } catch (error) {
+      console.error("Error fetching fare estimate:", error);
+    }
+    finally {
+      return 0;
+    }
+
+  }
   const chosenRide = RIDE_TYPES.find((r) => r.id === rideTypeId) || RIDE_TYPES[2];
-  const fare = distanceKm ? calcFare(distanceKm, chosenRide) : 0;
 
   function handleBlur(type) {
     setTimeout(() => {
@@ -189,6 +241,7 @@ export default function Dashboard() {
   useEffect(() => {
     return () => clearTimeout(matchTimer.current);
   }, [pickup, drop]);
+
 
   return (
     <main className="rd-main" role="main">
@@ -268,11 +321,11 @@ export default function Dashboard() {
               return (
                 <button key={rt.id} className={`rd-medium ${selected ? "selected" : ""}`} onClick={() => setRideTypeId(rt.id)}>
                   <div className="rd-medium-emoji">{rt.emoji}</div>
-                  <div className="rd-medium-meta">
-                    <div className="rd-medium-name">{rt.name}</div>
-                    <div className="rd-medium-sub">{rt.base} + {rt.per_km}/km</div>
-                  </div>
-                  <div className="rd-medium-right">{rt.eta_min}m</div>
+                  <div className="rd-medium-name">{rt.name}</div>
+                  <div className="rd-medium-sub">{rt.base} + {rt.per_km}/km*</div>
+                  {/* <div className="rd-medium-meta">
+                  </div> */}
+                  {/* <div className="rd-medium-right">{rt.eta_min}m</div> */}
                 </button>
               );
             })}
@@ -282,7 +335,7 @@ export default function Dashboard() {
         {/* Summary */}
         <div className="rd-summary">
           <div className="rd-dist"><div className="rd-dist-label">Distance</div><div className="rd-dist-value">{distanceKm ? `${distanceKm} km` : "—"}</div></div>
-          <div className="rd-fare"><div className="rd-fare-label">Est. Fare</div><div className="rd-fare-value">{fare ? formatINR(fare) : "—"}</div></div>
+          <div className="rd-fare"><div className="rd-fare-label">Est. Fare</div><div className="rd-fare-value">{estimatedFare ? formatINR(estimatedFare) : "—"}</div></div>
           <div className="rd-eta"><div className="rd-eta-label">ETA</div><div className="rd-eta-value">{etaMin ? `${etaMin} min` : "—"}</div></div>
         </div>
 

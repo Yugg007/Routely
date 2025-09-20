@@ -1,6 +1,9 @@
 package com.routely.user_service.dto;
 
+import java.util.Set;
+
 import com.routely.user_service.model.User;
+import com.routely.user_service.model.Vehicle;
 
 public class AuthResponse {
 	private String name;
@@ -10,6 +13,7 @@ public class AuthResponse {
     private String message;
     private boolean authStatus = false;
     private String jwtToken;
+    private Set<Vehicle> vehicles;
     
 	public AuthResponse(String message) {
 		super();
@@ -91,5 +95,14 @@ public class AuthResponse {
 	public void setIsDriver(String isDriver) {
 		this.isDriver = isDriver;
 	}
+	
+	public Set<Vehicle> getVehicles() {
+		return vehicles;
+	}
+
+	public void setVehicles(Set<Vehicle> vehicles) {
+		this.vehicles = vehicles;
+	}
+	
 
 }

@@ -16,25 +16,38 @@ public class LocationSocketHandler extends TextWebSocketHandler {
 	@Autowired
     private RedisTemplate<String, Object> redisTemplate;
 	
-    @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-    	String payload = message.getPayload();
-        System.out.println("Received: " + payload);
-        // TODO: Parse JSON {driverId, lat, lng} and store in Redis
-        DriverLocation location = objectMapper.readValue(payload, DriverLocation.class);
-        String key = "driver:" + location.getDriverId();
-        System.out.println("Key : " + key);
-        System.out.println(location.getDriverId());
-        redisTemplate.opsForValue().set(key, location);
-        location = (DriverLocation) redisTemplate.opsForValue().get(key);
-        System.out.println(location.getDriverId());
-        
-        try {
-			
-        	System.out.println("Get the name from cloud - " + redisTemplate.opsForValue().get("name"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-        session.sendMessage(new TextMessage("ACK from server"));
-    }
+	@Override
+	public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+	    String payload = message.getPayload();
+	    System.out.println("Received: " + payload);
+
+	    DriverLocation newLocation = objectMapper.readValue(payload, DriverLocation.class);
+	    String key = newLocation.getDriverId();
+	    System.out.println("Key : " + key);
+
+	    DriverLocation existingLocation = (DriverLocation) redisTemplate.opsForValue().get(key);
+
+	    boolean shouldUpdate = false;
+
+	    if (existingLocation == null || (existingLocation != null && existingLocation.getAccuracy() == null)) {
+	        shouldUpdate = true;
+	    } else if (newLocation.getAccuracy() <= existingLocation.getAccuracy()) {
+	        shouldUpdate = true;
+	    }
+
+	    if (shouldUpdate) {
+	        redisTemplate.opsForValue().set(key, newLocation);
+	        System.out.println("Updated Redis with more accurate location for driverId=" + newLocation.getDriverId());
+	    } else {
+	        System.out.println("Skipped update, existing location is more accurate for driverId=" + newLocation.getDriverId());
+	    }
+
+	    DriverLocation saved = (DriverLocation) redisTemplate.opsForValue().get(key);
+	    if (saved != null) {
+	        System.out.println("Final stored location -> driverId=" + saved.getDriverId() + ", accuracy=" + saved.getAccuracy());
+	    }
+
+	    session.sendMessage(new TextMessage("ACK from server"));
+	}
+
 }

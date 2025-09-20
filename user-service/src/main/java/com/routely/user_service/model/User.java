@@ -1,5 +1,8 @@
 package com.routely.user_service.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -24,8 +27,20 @@ public class User {
     
     @Column
     private String isDriver;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Vehicle> vehicles = new HashSet<>();
+    
 
-    // ✅ Default constructor (required by JPA)
+    public Set<Vehicle> getVehicles() {
+		return vehicles;
+	}
+
+	public void setVehicles(Set<Vehicle> vehicles) {
+		this.vehicles = vehicles;
+	}
+
+	// ✅ Default constructor (required by JPA)
     public User() {}
 
     // ✅ Private constructor (used by Builder)

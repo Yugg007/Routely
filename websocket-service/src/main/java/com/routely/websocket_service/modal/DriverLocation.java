@@ -7,6 +7,7 @@ public class DriverLocation implements Serializable {
     private double lat;
     private double lng;
     private String timestamp;
+    private Integer accuracy;
     
     
 	public String getDriverId() {
@@ -32,5 +33,12 @@ public class DriverLocation implements Serializable {
 	}
 	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public Integer getAccuracy() {
+		return accuracy;
+	}
+	public void setAccuracy(Integer accuracy) {
+		this.accuracy = accuracy;
 	}    
 }

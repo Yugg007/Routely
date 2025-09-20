@@ -96,6 +96,7 @@ public class JwtUtil {
 		claims.put("email", authResponse.getEmail());
 		claims.put("mobileNo", authResponse.getMobileNo());
 		claims.put("isDriver", authResponse.getIsDriver());
+		
 		JwtBuilder builder = Jwts.builder()
 				.setClaims(claims)
 				.setSubject(authResponse.getEmail())

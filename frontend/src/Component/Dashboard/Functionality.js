@@ -48,7 +48,7 @@ export function travelModeForRide(id) {
 // AutocompleteService → for address suggestions.
 // Geocoder → for forward & reverse geocoding.
 export function initGoogleServices() {
-  if (window.google) {
+  if (typeof window !== 'undefined' && window.google) {
     return {
       autocompleteService: new window.google.maps.places.AutocompleteService(),
       geocoder: new window.google.maps.Geocoder(),
@@ -56,7 +56,6 @@ export function initGoogleServices() {
   }
   return { autocompleteService: null, geocoder: null };
 }
-
 
 // Converts latitude/longitude → human-readable address.
 // Uses Google’s geocode API.
@@ -117,6 +116,9 @@ export function geocodePlaceId(geocoder, placeId, cb) {
 export function computeGoogleRoute(pickup, drop, rideTypeId, cb, fallbackCb) {
   const ds = new window.google.maps.DirectionsService();
   const mode = travelModeForRide(rideTypeId);
+
+  console.log("Computing route via Google:", pickup, drop, mode);
+  console.log("ds is", ds);
 
   const request = {
     origin: { lat: pickup.lat, lng: pickup.lng },

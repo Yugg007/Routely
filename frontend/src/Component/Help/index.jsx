@@ -23,6 +23,7 @@ export default function Help() {
             lat: 12.9716,
             lng: 77.5946,
             timestamp: new Date().toISOString(),
+            accuracy: 3
         };
         console.log("Sending via react-use-websocket:", locationUpdate);
         sendMessage(JSON.stringify(locationUpdate));

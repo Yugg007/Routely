@@ -88,7 +88,7 @@ export default function Dashboard() {
           if (mapRef.current && bounds) {
             try {
               mapRef.current.fitBounds(bounds);
-            } catch (e) {}
+            } catch (e) { }
           }
         }, 80);
       },
@@ -131,6 +131,7 @@ export default function Dashboard() {
     }
 
     geocodePlaceId(geocoderRef.current, s.id, (loc) => {
+      console.log("Geocoded placeId", s.id, "to", loc);
       if (type === "pickup") {
         setPickup(loc);
         setPickupQuery(loc.label);
@@ -187,8 +188,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     return () => clearTimeout(matchTimer.current);
-  }
-  , [pickup, drop]);
+  }, [pickup, drop]);
 
   return (
     <main className="rd-main" role="main">
@@ -199,7 +199,7 @@ export default function Dashboard() {
             mapContainerStyle={{ width: "100%", height: "100%" }}
             center={center}
             zoom={14}
-            options={{ disableDefaultUI: true, clickableIcons: false }}
+
             onLoad={(map) => (mapRef.current = map)}
           >
             {pickup && <Marker position={{ lat: pickup.lat, lng: pickup.lng }} />}
@@ -288,7 +288,7 @@ export default function Dashboard() {
 
         {/* Actions */}
         <div className="rd-cta-row">
-          <button className="btn btn-ghost" onClick={() => {setDrop(null); setDropQuery(""); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
+          <button className="btn btn-ghost" onClick={() => { setDrop(null); setDropQuery(""); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
           <button className="btn btn-primary btn-request" disabled={!(pickup && drop) || findingDriver} onClick={requestRide}>{findingDriver ? "Searching…" : "Request Ride"}</button>
           {matchedDriver && <button className="btn btn-success" onClick={() => setStatus("Driver on the way!")}>Driver Arriving</button>}
         </div>

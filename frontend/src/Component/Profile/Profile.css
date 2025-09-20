@@ -221,6 +221,143 @@
   margin-top: 1rem;
 }
 
+
+
+/* Vehicle section */
+.profile-modern-vehicle {
+  margin-top: 22px;
+  padding-top: 6px;
+}
+
+.vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Vehicle list items */
+.vehicle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vehicle-card {
+  display: flex;
+  justify-content: space-between;
+  background: var(--glass);
+  padding: 12px;
+  border-radius: 10px;
+  align-items: center;
+  border: 1px solid rgba(15,23,42,0.03);
+}
+
+.vehicle-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.vehicle-type {
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--accent-600);
+  box-shadow: 0 6px 18px rgba(31,111,235,0.06);
+}
+
+.vehicle-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-model {
+  font-weight: 600;
+}
+
+.vehicle-meta {
+  color: var(--muted-2);
+  font-size: 13px;
+  display: flex;
+  gap: 12px;
+}
+
+
+/* Buttons */
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.08);
+}
+
+/* Form */
+.vehicle-form {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(250,251,253,0.98));
+  border: 1px solid rgba(15,23,42,0.03);
+  box-shadow: 0 10px 28px rgba(2,6,23,0.03);
+}
+
+.vehicle-form h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.field-label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,0.06);
+  outline: none;
+  font-size: 14px;
+}
+
+.field input:focus,
+.field select:focus {
+  box-shadow: 0 6px 18px rgba(31,111,235,0.06);
+  border-color: rgba(31,111,235,0.2);
+}
+
+.vehicle-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.form-error {
+  color: var(--danger);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+/* small helpers */
+.small { font-size: 13px; color: var(--muted); }
+
+
 /* ================== Responsive ================== */
 @media (max-width: 480px) {
   .auth-modern-left, .profile-modern-container {

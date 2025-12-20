@@ -99,7 +99,7 @@ public class JwtUtil {
 		
 		JwtBuilder builder = Jwts.builder()
 				.setClaims(claims)
-				.setSubject(authResponse.getEmail())
+				.setSubject(authResponse.getUserId().toString())
 				.setIssuedAt(new Date())
 				.setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
 				.signWith(getSecretKey(), SignatureAlgorithm.HS256);
@@ -114,6 +114,7 @@ public class JwtUtil {
 		authResponse.setEmail((String) claims.get("email"));
 		authResponse.setMobileNo((String) claims.get("mobileNo"));
 		authResponse.setIsDriver((String) claims.get("isDriver"));
+		authResponse.setUserId(Long.parseLong(claims.getSubject()));
 		return authResponse;
 	}
 }

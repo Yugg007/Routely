@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
-const WS_DEBUG_URL = "wss://localhost:8002/ws/location";
+const WS_DEBUG_URL = "wss://localhost:8002/ws/location1";
 
 export default function Help() {
     const [messages, setMessages] = useState([]);

@@ -17,7 +17,7 @@ public class FareEstimationController {
 	@Autowired
 	private FareEstimationService service;
 
-	@PostMapping("/estimateFare")
+	@PostMapping("/user/estimateFare")
 	public FareEstimateResponse estimateFare(@RequestBody FareEstimateRequest request) {
 		return service.estimateFare(request);
 	}

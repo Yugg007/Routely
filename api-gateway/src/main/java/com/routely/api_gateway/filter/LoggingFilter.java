@@ -75,7 +75,9 @@ public class LoggingFilter implements GlobalFilter, Ordered {
 										// build cookie - for cross-site use SameSite=None and Secure=true (requires
 										// https)
 										ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie
-												.from("RoutelyToken", jwtToken).httpOnly(true).path("/")
+												.from("RoutelyToken", jwtToken)
+												.httpOnly(true)
+												.path("/")
 												.maxAge(Duration.ofHours(1));
 
 										if (isSecure) {

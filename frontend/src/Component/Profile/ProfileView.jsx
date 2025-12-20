@@ -7,7 +7,7 @@ import "./Profile.css";
 
 export default function ProfileView() {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state?.auth?.user);
+  const user = useSelector((state) => state?.authCache?.user);
 
   // Vehicles state: attempt to pull from user object -> fallback to localStorage -> empty array
   const [vehicles, setVehicles] = useState([]);

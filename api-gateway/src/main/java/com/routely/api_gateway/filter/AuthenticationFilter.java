@@ -37,6 +37,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+        System.out.println("Path to hit - "+ path);
 
         // Skip auth for open endpoints
         if (true || isOpenApiEndpoint(path)) {

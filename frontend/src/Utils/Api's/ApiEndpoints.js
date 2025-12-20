@@ -9,8 +9,21 @@ const ApiEndpoints = {
     "deleteVehicle" : "users/deleteVehicle",
     "fetchVehicles" : "/users/fetchVehicles",
 
+    // User Perspective
+    "estimateFare" : "/trips/user/estimateFare",
+    "requestRide" : "/trips/user/requestRide",
 
-    "estimateFare" : "/trips/estimateFare"
+    // Driver Perspective
+    "acceptRide" : "/trips/driver/acceptRide",
+    "cancelRide" : "/trips/cancelRide",
+    "completeRide" : "/trips/completeRide",
+    "getTripHistory" : "/trips/getTripHistory",
+    "getActiveTrips" : "/trips/getActiveTrips",
+
+
+    "locationSocket" : "/ws/location",
+    "driverSocket" : "/ws/driver-socket",
+    "userSocket" : "/ws/user-socket",
 }
 
 export default ApiEndpoints;

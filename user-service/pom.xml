@@ -80,6 +80,18 @@
 			<scope>runtime</scope>
 		</dependency>	
 		
+    <!-- Kafka Clients -->
+    <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+    </dependency>
+
+    <!-- Spring Kafka -->
+    <dependency>
+        <groupId>org.springframework.kafka</groupId>
+        <artifactId>spring-kafka</artifactId>
+    </dependency>		
+		
 	</dependencies>
 
 <build>

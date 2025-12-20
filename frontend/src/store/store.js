@@ -5,7 +5,7 @@ import routeCacheReducer from "./routeCacheSlice";
 
 export const store = configureStore({
     reducer : {
-        auth : userReducer,
+        authCache : userReducer,
         routeCache : routeCacheReducer
     }
 })

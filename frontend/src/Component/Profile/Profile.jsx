@@ -5,7 +5,7 @@ import "./Profile.css";
 import { useSelector } from "react-redux";
 
 export default function Profile() {
-  const isLoggedIn = useSelector((state) => state?.auth?.isLoggedIn);
+  const isLoggedIn = useSelector((state) => state?.authCache?.isLoggedIn);
 
   return (
     <div className="app-modern-container">

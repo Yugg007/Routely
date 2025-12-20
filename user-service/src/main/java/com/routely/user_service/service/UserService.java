@@ -37,7 +37,7 @@ public class UserService {
 				.mobileNo(request.getMobileNo()).name(request.getName()).isDriver(request.getIsDriver()).build();
 
 		userRepository.save(user);
-		return new AuthResponse(request, "Successfully register user.");
+		return new AuthResponse(user, "Successfully register user.");
 	}
 
 	public AuthResponse login(AuthRequest request) throws Exception {

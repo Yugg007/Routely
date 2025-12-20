@@ -6,6 +6,7 @@ import com.routely.user_service.model.User;
 import com.routely.user_service.model.Vehicle;
 
 public class AuthResponse {
+	private Long userId;
 	private String name;
     private String email;
     private String mobileNo;
@@ -19,21 +20,13 @@ public class AuthResponse {
 		super();
 		this.message = message;
 	}
-	
-	public AuthResponse(AuthRequest authRequest, String message) {
-		this.name = authRequest.getName();
-		this.email = authRequest.getEmail();
-		this.mobileNo = authRequest.getMobileNo();
-		this.isDriver = authRequest.getIsDriver();
-		this.message = message;
-		this.authStatus = true;
-	}
-    
+	   
 	public AuthResponse() {
 		// TODO Auto-generated constructor stub
 	}
 
 	public AuthResponse(User user, String message) {
+		this.userId = user.getId();
 		this.name = user.getName();
 		this.email = user.getEmail();
 		this.mobileNo = user.getMobileNo();
@@ -102,6 +95,14 @@ public class AuthResponse {
 
 	public void setVehicles(Set<Vehicle> vehicles) {
 		this.vehicles = vehicles;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
 	}
 	
 

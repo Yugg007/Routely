@@ -22,7 +22,6 @@ target/
 *.war
 *.ear
 *.iml
-*.yml
 *.yaml
 
 

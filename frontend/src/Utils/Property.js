@@ -1,6 +1,12 @@
+// Change this variable to "localhost" or your IP "10.103.72.253" as needed
+const BASE_HOST = "10.164.73.253"; 
+
 const Property = {
-    SpringBackendPath : "https://localhost:8002",
-    NodeBackendPath : "http://localhost:9004",
-}
+    SpringBackendPath: `https://${BASE_HOST}:8002`,
+    NodeBackendPath: `http://${BASE_HOST}:9004`,
+    Driver_WS_URL: `wss://${BASE_HOST}:8002/ws/driver-socket`,
+    User_WS_URL: `wss://${BASE_HOST}:8002/ws/user-socket`,
+    Debug_WS_URL: `wss://${BASE_HOST}:8002/ws/location1`
+};
 
 export default Property;

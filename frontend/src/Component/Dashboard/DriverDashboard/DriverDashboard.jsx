@@ -5,6 +5,7 @@ import { BackendService } from "../../../Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "../../../Utils/Api's/ApiEndpoints";
 import DriverDashboardUI from "./DriverDashboardUI";
 import "./DriverDashboard.css";
+import Property from "../../../Utils/Property";
 
 const DRIVER_STATES = {
   OFFLINE: "OFFLINE",
@@ -36,7 +37,7 @@ export default function DriverDashboard() {
   const acceptTimer = useRef(null);
 
   // ---------------- WebSocket ----------------
-  const WS_URL = "wss://localhost:8002/ws/driver-socket";
+  const WS_URL = Property.Driver_WS_URL;
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(WS_URL, {
     onOpen: () => console.log("WebSocket connected"),

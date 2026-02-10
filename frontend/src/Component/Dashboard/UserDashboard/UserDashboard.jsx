@@ -19,6 +19,7 @@ import { cacheRoute } from "../../../store/routeCacheSlice";
 import { BackendService } from "../../../Utils/Api's/ApiMiddleWare";
 import ApiEndpoints from "../../../Utils/Api's/ApiEndpoints";
 import useWebSocket from "react-use-websocket";
+import Property from "../../../Utils/Property";
 
 const driversTemp = [
   { lat: 19.1082, lng: 72.8775, icon: "🚘" }, // NE
@@ -39,7 +40,7 @@ export default function UserDashboard() {
   const routeCache = useSelector((state) => state?.routeCache?.routes || {});
   const user = useSelector((state) => state?.authCache?.user || null);
   console.log("User from store:", user);
-  
+
   const FALLBACK = { lat: 12.9716, lng: 77.5946 };
 
   const [center, setCenter] = useState(FALLBACK);
@@ -70,14 +71,46 @@ export default function UserDashboard() {
     libraries: ["places"],
   });
 
-  const WS_URL = "wss://localhost:8002/ws/user-socket";
+  const WS_URL = Property.User_WS_URL
+  const { sendMessage, readyState } = useWebSocket(WS_URL, {
+    onOpen: () => console.log("Connected to Real-time Hub"),
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(WS_URL, {
-    onOpen: () => console.log("WebSocket connected"),
-    onClose: () => console.log("WebSocket disconnected"),
-    onError: (err) => console.error("WebSocket error", err),
-    shouldReconnect: () => true, // auto reconnect
+    // Logic-heavy processing stays inside onMessage
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleServerEvent(data);
+      } catch (err) {
+        console.error("Failed to parse message", err);
+      }
+    },
+
+    shouldReconnect: (closeEvent) => true,
+    retryOnError: true,
+    reconnectAttempts: 10,
+    reconnectInterval: 3000,
   });
+
+  // A versatile handler to route different responses
+  const handleServerEvent = (data) => {
+    console.log("Received WebSocket message:", data);
+    switch (data.type) {
+      case 'DriverLocationAround3Km':
+        if (Array.isArray(data.payload)) {
+          setDrivers(data.payload);
+          console.log("It's an array! Total items:", data.payload.length);
+        }
+        break;
+      case 'TABLE_UPDATE':
+        updateGridState(data.payload.rows);
+        break;
+      case 'ERROR':
+        handleGlobalError(data.payload.code);
+        break;
+      default:
+        console.warn("Unhandled message type:", data.type);
+    }
+  };
 
   // init google services for address suggestion and forward/reverse geocoding(lat/lng ↔ address)
   useEffect(() => {
@@ -111,24 +144,6 @@ export default function UserDashboard() {
       sendMessage(JSON.stringify(pickup));
     }
   }, [pickup, isLoaded]);
-
-  useEffect(() => {
-    if (!lastMessage) return;
-    try {
-      const socketDriver = JSON.parse(lastMessage.data); // converts JSON string → array of objects
-      console.log("Drivers list:", drivers);
-
-      // setDrivers(socketDriver);
-
-      // // Example: access first driver's lat/lng
-      // if (socketDriver.length > 0) {
-      //   console.log("First driver:", socketDriver[0].lat, socketDriver[0].lng);
-      // }
-      // handleSocketMessage(msg);
-    } catch (e) {
-      console.warn("Invalid WebSocket message", lastMessage.data);
-    }
-  }, [lastMessage]);
 
   const savedToRouteCache = (path, dkm, mins, bounds) => {
     const data = {
@@ -247,7 +262,7 @@ export default function UserDashboard() {
       rideType: rideTypeId,
       user_id: user?.userId,
       userMobNo: user?.mobileNo,
-      name : user?.name
+      name: user?.name
     }
 
     console.log("Requesting ride with body:", body);
@@ -258,9 +273,9 @@ export default function UserDashboard() {
     try {
       const response = await BackendService(ApiEndpoints.requestRide, body);
       if (response.data) {
-        // setFindingDriver(true);
-        // setMatchedDriver(null);
-        // setStatus("Searching for nearby drivers...");
+        setFindingDriver(true);
+        setMatchedDriver(null);
+        setStatus("Searching for nearby drivers...");
       }
     }
     catch (e) {
@@ -269,22 +284,7 @@ export default function UserDashboard() {
       return;
     }
 
-    // setFindingDriver(true);
-    // setMatchedDriver(null);
-    // setStatus("Searching for nearby drivers...");
 
-    // clearTimeout(matchTimer.current);
-    // matchTimer.current = setTimeout(() => {
-    //   const d = {
-    //     name: "Mohit Sharma",
-    //     vehicle: "Toyota Innova • KA05AB1234",
-    //     eta: etaMin,
-    //     phone: "+91 98xxxxxxx",
-    //   };
-    //   setMatchedDriver(d);
-    //   setFindingDriver(false);
-    //   setStatus("Driver matched — arriving soon");
-    // }, 1400);
   }
 
   function cancelRide() {
@@ -475,7 +475,10 @@ export default function UserDashboard() {
 
         {/* Actions */}
         <div className="rd-cta-row">
-          <button className="btn btn-ghost" onClick={() => { setDrop(null); setDropQuery(""); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
+          {!findingDriver &&
+            <button className="btn btn-ghost" onClick={() => { setDrop(null); setDropQuery(""); setDropSuggestions([]); setStatus(""); setRoutePath(null); }}>Reset</button>
+          }
+
           <button className="btn btn-primary btn-request" disabled={!(pickup && drop) || findingDriver} onClick={requestRide}>{findingDriver ? "Searching…" : "Request Ride"}</button>
           {matchedDriver && <button className="btn btn-success" onClick={() => setStatus("Driver on the way!")}>Driver Arriving</button>}
         </div>

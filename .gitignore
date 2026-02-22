@@ -1,0 +1,97 @@
+# ---- Node / React ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+.next/
+out/
+.env
+.env.local
+.env.*.local
+
+# ---- Java / Maven ----
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.yaml
+
+
+# ---- Spring Boot ----
+/bin/
+/out/
+/build/
+
+# ---- IDEs ----
+# IntelliJ
+.idea/
+*.iws
+*.ipr
+*.iml
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# ---- OS-specific ----
+.DS_Store
+Thumbs.db
+
+# ---- Misc ----
+*.swp
+*.swo
+*.tmp
+*.bak
+
+
+Others/
+.metadata/
+
+graphhopper/
+SSLCertificate/
+Deployment/
+
+
+
+
+
+# Compiled class files
+**/target/
+**.class
+
+# Log files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE Specific (Eclipse/STS/IntelliJ)
+.settings/
+.project
+.classpath
+.factorypath
+.idea/
+*.iml
+*.iws
+
+# Mac specific
+.DS_Store

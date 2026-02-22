@@ -1,0 +1,68 @@
+server:
+   port: 8005
+   ssl:
+      enabled: true
+      key-store: classpath:trip-service-keystore.p12
+      key-store-password: <password>
+      key-store-type: PKCS12
+      key-alias: trip-service
+      trust-store: classpath:truststore.p12
+      trust-store-password: <password>
+      trust-store-type: PKCS12
+
+spring:
+   application:
+      name: trip-service
+
+   kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      client-id: user-service-producer
+
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: user-service-group
+      auto-offset-reset: earliest
+
+
+   datasource:
+      url: jdbc:mysql://localhost:3306/routely
+      username: root
+      password: <password>
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+   jpa:
+      hibernate:
+         ddl-auto: update # Options: create, create-drop, validate, update
+      properties:
+         hibernate:
+            dialect: org.hibernate.dialect.MySQL8Dialect
+
+eureka:
+   instance:
+      hostname: localhost
+      secure-port-enabled: true
+      secure-port: 8005
+      non-secure-port-enabled: false
+      prefer-ip-address: false
+      instance-id: ${spring.application.name}:${server.port}
+      metadata-map:
+         secure: true
+
+   client:
+      register-with-eureka: true
+      fetch-registry: true
+      service-url:
+         defaultZone: https://localhost:8761/eureka/
+
+fare:
+   base: 50
+   perKm: 12
+   perMinute: 2
+   booking: 10
+   minBookingCharge: 50
+   maxBookingCharge: 300

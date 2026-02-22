@@ -1,0 +1,30 @@
+server:
+  port: 8761
+  ssl:
+    enabled: true
+    key-store: src/main/resources/eureka-server-keystore.p12
+    key-store-password: <password>
+    key-store-type: PKCS12
+    key-alias: eureka-server
+    trust-store: src/main/resources/truststore.p12
+    trust-store-password: <password>
+    trust-store-type: PKCS12		
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+    secure-port-enabled: true
+    secure-port: 8761
+    non-secure-port-enabled: false
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+
+  client:
+    register-with-eureka: false   # server itself doesn’t register
+    fetch-registry: false
+    service-url:
+      defaultZone: https://localhost:8761/eureka/

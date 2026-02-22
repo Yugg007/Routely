@@ -1,0 +1,60 @@
+server:
+  port: 8003
+  ssl:
+    enabled: true
+    key-store: src/main/resources/user-service-keystore.p12
+    key-store-password: <password>
+    key-store-type: PKCS12
+    key-alias: user-service
+
+    # 🔑 Truststore (so user-service trusts Eureka's certificate)
+    trust-store: src/main/resources/truststore.p12
+    trust-store-password: <password>
+    trust-store-type: PKCS12
+
+spring:
+  application:
+    name: user-service
+    kafka:
+       bootstrap-servers: localhost:9092
+       properties:
+            security.protocol: PLAINTEXT
+       consumer:
+            group-id: user-service-group
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            auto-offset-reset: earliest
+       admin:
+            client-id: user-service-admin
+  datasource:
+    url: jdbc:mysql://localhost:3306/routely
+    username: root
+    password: <password>
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # Optional: create, create-drop, validate, update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  data:
+     redis:
+       host: localhost
+       port: 6379
+eureka:
+  instance:
+    hostname: localhost
+    secure-port-enabled: true
+    secure-port: 8003
+    non-secure-port-enabled: false
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+    metadata-map:
+      secure: "true"
+
+  client:
+    register-with-eureka: true   # client registers with Eureka
+    fetch-registry: true
+    service-url:
+      defaultZone: https://localhost:8761/eureka/

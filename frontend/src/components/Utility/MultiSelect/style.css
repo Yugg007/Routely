@@ -1,0 +1,38 @@
+.multi-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 280px;
+  font-family: Arial, sans-serif;
+}
+
+.multi-select-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.multi-select-input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  outline: none;
+  cursor: not-allowed;
+}
+
+.multi-select-select {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.multi-select-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+}

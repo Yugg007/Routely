@@ -1,0 +1,91 @@
+/* ================== App Container ================== */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  /* min-height: 100vh; */
+  width: 100%;
+}
+
+/* ================== App Content ================== */
+.app-content{
+  margin-top: 70px;
+  flex: 1;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background: white;
+  min-height: calc(100vh - 205px); /* Adjust based on header and footer height */
+}
+
+
+/* ================== Footer ================== */
+.app-footer {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0; /* prevent footer from shrinking */
+}
+
+.footer-content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #06b6d4;
+}
+
+/* ================== Navbar Adjustment ================== */
+.navbar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .app-content {
+    padding: 1rem;
+  }
+
+  .footer-content {
+    font-size: 0.85rem;
+  }
+
+  .footer-links {
+    gap: 0.5rem;
+  }
+}

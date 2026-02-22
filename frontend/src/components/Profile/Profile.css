@@ -1,0 +1,373 @@
+/* ================== Global ================== */
+* {
+  box-sizing: border-box;
+}
+
+/* ================== Container ================== */
+.auth-modern-container,
+.app-modern-container {
+  display: flex;
+  background: linear-gradient(180deg,#f3f4f6,#ffffff);
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 3rem;
+  width: 100%;
+}
+
+.profile-modern-container {
+  margin-top: 40px;
+}
+
+
+/* ================== Auth Card ================== */
+.auth-modern-left {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 2rem 3rem;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.auth-modern-brand h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg,#2563eb,#06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-modern-brand p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+/* ================== Form ================== */
+.auth-modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.form-field label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.form-field input {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-field input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.2);
+}
+
+/* ================== Password Toggle ================== */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 2.5rem; /* space for eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.password-toggle:hover {
+  color: #111827;
+}
+
+/* ================== Error ================== */
+.form-error {
+  color: #b91c1c;
+  background: rgba(185,28,28,0.05);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* ================== Buttons ================== */
+.btn {
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg,#2563eb,#06b6d4);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.btn-ghost:hover {
+  background: #f9fafb;
+}
+
+.btn-inline {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ================== Auth Switch ================== */
+.auth-switch {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* ================== Profile ================== */
+.profile-modern-container {
+  width: 100%;
+  max-width: 450px;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 2rem 3rem;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.profile-info p {
+  margin: 0.2rem 0 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.profile-actions p {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.profile-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+
+
+/* Vehicle section */
+.profile-modern-vehicle {
+  margin-top: 22px;
+  padding-top: 6px;
+}
+
+.vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Vehicle list items */
+.vehicle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vehicle-card {
+  display: flex;
+  justify-content: space-between;
+  background: var(--glass);
+  padding: 12px;
+  border-radius: 10px;
+  align-items: center;
+  border: 1px solid rgba(15,23,42,0.03);
+}
+
+.vehicle-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.vehicle-type {
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--accent-600);
+  box-shadow: 0 6px 18px rgba(31,111,235,0.06);
+}
+
+.vehicle-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-model {
+  font-weight: 600;
+}
+
+.vehicle-meta {
+  color: var(--muted-2);
+  font-size: 13px;
+  display: flex;
+  gap: 12px;
+}
+
+
+/* Buttons */
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.08);
+}
+
+/* Form */
+.vehicle-form {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(250,251,253,0.98));
+  border: 1px solid rgba(15,23,42,0.03);
+  box-shadow: 0 10px 28px rgba(2,6,23,0.03);
+}
+
+.vehicle-form h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.field-label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,0.06);
+  outline: none;
+  font-size: 14px;
+}
+
+.field input:focus,
+.field select:focus {
+  box-shadow: 0 6px 18px rgba(31,111,235,0.06);
+  border-color: rgba(31,111,235,0.2);
+}
+
+.vehicle-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.form-error {
+  color: var(--danger);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+/* small helpers */
+.small { font-size: 13px; color: var(--muted); }
+
+
+/* ================== Responsive ================== */
+@media (max-width: 480px) {
+  .auth-modern-left, .profile-modern-container {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+  }
+}

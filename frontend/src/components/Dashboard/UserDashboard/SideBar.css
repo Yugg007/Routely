@@ -1,0 +1,117 @@
+/* Dim the inputs and change background */
+/* input:disabled, button:disabled {
+    background-color: #f0f0f0 !important;
+    color: #a0a0a0 !important;
+    border-color: #ddd !important;
+} */
+
+/* Add a subtle fade to the whole section */
+.frozen-mode {
+    pointer-events: none; /* Secondary layer of protection */
+    opacity: 0.7;
+    filter: grayscale(0.2);
+    transition: all 0.3s ease;
+}
+
+/* Keep the selected transport visible but desaturated */
+.rd-medium.selected.disabled-btn {
+    border: 5px solid #ccc;
+    background-color: #e8e8e8;
+}
+
+
+
+/* Ride Info Card (PIN & ETA) */
+.ride-info-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 15px 0;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.info-item:first-child {
+    border-right: 1px solid #e2e8f0;
+}
+
+.info-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+}
+
+.info-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'Courier New', Courier, monospace; /* Monospaced for PIN */
+}
+
+/* Driver Found Button */
+.btn-success-fixed {
+    background-color: #22c55e !important;
+    color: white !important;
+    border: none;
+    font-weight: 700;
+    flex: 2;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Cancel Button Styling (Red Outline) */
+.btn-danger-outline {
+    background: transparent;
+    border: 2px solid #ef4444;
+    color: #ef4444;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-danger-outline:hover {
+    background: #fef2f2;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle pulse for the "Found" button to show it's active */
+.btn-success-fixed {
+    animation: successPulse 2s infinite;
+}
+
+@keyframes successPulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* State for frozen inputs */
+.frozen-mode input {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+}

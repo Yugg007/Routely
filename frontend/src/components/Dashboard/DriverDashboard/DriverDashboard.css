@@ -1,0 +1,178 @@
+/* DriverDashboard.css */
+
+/* Root container */
+.driver-dashboard {
+  background-color:linear-gradient(180deg,#f3f4f6,#ffffff);
+  min-height: calc(100vh - 205px);
+  padding: 1.5rem;
+  font-family: "Inter", "Roboto", sans-serif;
+  color: #111827; /* dark gray text */
+}
+
+/* Header */
+.driver-dashboard header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.driver-dashboard h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.driver-dashboard header button {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.driver-dashboard header button:hover {
+  transform: scale(1.05);
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Main layout */
+.driver-dashboard main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Card styles */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Map placeholder */
+.map-placeholder {
+  height: 260px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-green {
+  background-color: #10b981;
+  color: #fff;
+}
+
+.btn-green:hover {
+  background-color: #059669;
+}
+
+.btn-red {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.btn-red:hover {
+  background-color: #dc2626;
+}
+
+.btn-blue {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.btn-blue:hover {
+  background-color: #2563eb;
+}
+
+.btn-yellow {
+  background-color: #f59e0b;
+  color: #fff;
+}
+
+.btn-yellow:hover {
+  background-color: #d97706;
+}
+
+/* Info text */
+.text-muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Notification area */
+.notification {
+  border-left: 4px solid #3b82f6;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.notification strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+/* Controls section */
+.controls button {
+  width: 100%;
+  margin-top: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 0.7rem;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.controls button:hover {
+  background: #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .driver-dashboard main {
+    grid-template-columns: 1fr;
+  }
+}

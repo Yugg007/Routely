@@ -1,0 +1,123 @@
+/* --- Core Map Container --- */
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%; /* Ensure the parent has a defined height */
+  overflow: hidden;
+}
+
+.map-container {
+  width: 100%;
+  height: 100vh; /* Default to full screen, adjust if you have a header */
+  min-height: 400px;
+}
+
+/* --- Recenter Button --- */
+.recenter-btn {
+  position: absolute;
+  bottom: 120px; /* Positioned above the Active Ride Tray */
+  right: 20px;
+  background-color: #ffffff;
+  color: #1a73e8; /* Google Blue */
+  border: none;
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #e0e0e0;
+}
+
+.recenter-btn:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+.recenter-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.recenter-btn .icon {
+  font-size: 18px;
+}
+
+/* --- Custom Map Labels (for activeDestination) --- */
+.map-label-bg {
+  background-color: #000000;
+  color: #ffffff !important;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px !important;
+  font-weight: bold;
+  white-space: nowrap;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  /* This moves the label text up so it doesn't overlap the marker pin */
+  margin-bottom: 45px; 
+}
+
+/* --- Loading Screen Overlay --- */
+.loading-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  font-family: sans-serif;
+  color: #555;
+}
+
+.loading-screen::after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  margin-top: 15px;
+  border: 4px solid #dddddd;
+  border-top: 4px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Error State --- */
+.map-error {
+  width: 100%;
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff0f0;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  margin: 10px;
+}
+
+/* --- Google Maps Internal UI Tweaks --- */
+/* Hides the "Terms of Use" and "Report a Map Error" for a cleaner driver UI */
+.gm-style-cc, .gmnoprint {
+  display: none !important;
+}
+
+/* Keeps only the Zoom buttons if enabled, but moves them up slightly */
+.gm-bundled-control-on-bottom {
+  bottom: 140px !important;
+}

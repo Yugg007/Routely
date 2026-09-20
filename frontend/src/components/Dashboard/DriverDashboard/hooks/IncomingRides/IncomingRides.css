@@ -1,0 +1,177 @@
+:root {
+  --primary: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --bg-card: #ffffff;
+  --bg-app: #f8fafc;
+}
+
+.incoming-rides-shell {
+  padding: 20px;
+  background-color: var(--bg-app);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: var(--text-main);
+  margin-bottom: 20px;
+}
+
+.incoming-rides-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.incoming-ride-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.incoming-ride-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.ride-id {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.passenger-name {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Location Track Styling */
+.location-track {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.track-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dot.start { background: var(--primary); }
+.dot.end { background: var(--danger); }
+
+.line {
+  width: 2px;
+  flex-grow: 1;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+.location-point label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.location-point p {
+  margin: 2px 0 12px 0;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Buttons */
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+
+.card-actions button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-accept {
+  background-color: var(--success);
+  color: white;
+}
+
+.btn-decline {
+  background-color: #f1f5f9;
+  color: var(--text-muted);
+}
+
+.card-actions button:hover {
+  opacity: 0.9;
+}
+
+.track-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.start { background: #2ecc71; } /* Green for Pickup */
+.end { background: #e74c3c; }   /* Red for Drop */
+
+.line {
+  width: 2px;
+  height: 30px;
+  background: #ddd;
+  margin: 4px 0;
+}
+
+.address-text {
+  /* Necessary setup for line-clamping */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  /* The actual limit (change number to your preference) */
+  -webkit-line-clamp: 2; 
+  line-clamp: 2; /* Future-proofing standard property */
+
+  /* Fallback for very old browsers: 
+     Set a max-height based on line-height x number of lines */
+  line-height: 1.4em;
+  max-height: 2.8em; 
+}

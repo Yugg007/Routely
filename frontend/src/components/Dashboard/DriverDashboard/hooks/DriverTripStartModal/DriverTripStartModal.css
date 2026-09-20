@@ -1,0 +1,173 @@
+/* Overlay with Backdrop Blur */
+.trip-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+/* Modal Container */
+.trip-modal-container {
+    width: 100%;
+    max-width: 28rem;
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+/* Header */
+.trip-modal-header {
+    padding: 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.trip-modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.trip-modal-header p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* Body and Input */
+.trip-modal-body {
+    padding: 2rem;
+}
+
+.pin-input-wrapper {
+    position: relative;
+}
+
+.pin-field {
+    width: 100%;
+    text-align: center;
+    font-size: 2.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 1rem;
+    padding: 1rem 0;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.pin-field:focus {
+    border-color: #3b82f6;
+}
+
+.pin-field.is-error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.pin-field.is-success {
+    border-color: #22c55e;
+    background-color: #f0fdf4;
+}
+
+/* Loading State */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 0.75rem;
+}
+
+.spin-loader {
+    width: 2rem;
+    height: 2rem;
+    border: 4px solid #2563eb;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Text Feedback */
+.error-text {
+    color: #ef4444;
+    font-size: 0.875rem;
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 500;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.success-text {
+    color: #16a34a;
+    font-size: 0.875rem;
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 700;
+}
+
+/* Footer & Buttons */
+.trip-modal-footer {
+    padding: 1rem;
+    background-color: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btn-start-trip {
+    width: 100%;
+    padding: 1rem;
+    background-color: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.btn-start-trip:active {
+    transform: scale(0.95);
+}
+
+.btn-start-trip:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-cancel-trip {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-cancel-trip:hover {
+    color: #374151;
+}
+
+/* Animations */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}

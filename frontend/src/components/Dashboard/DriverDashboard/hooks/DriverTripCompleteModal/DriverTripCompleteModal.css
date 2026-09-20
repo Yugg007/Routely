@@ -1,0 +1,166 @@
+/* Reuse your overlay styles for consistency */
+.trip-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px); /* Nice Mac-like blur effect */
+}
+
+.trip-modal-container {
+  background: white;
+  padding: 24px;
+  border-radius: 16px; /* Rounded corners like modern macOS */
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.icon-circle.success {
+  width: 60px;
+  height: 60px;
+  background: #e6fcf5;
+  color: #0ca678;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 15px;
+}
+
+/* THE STACKED BUTTON LOGIC */
+.trip-modal-footer.stacked {
+  display: flex;
+  flex-direction: column; /* Stacks buttons vertically */
+  gap: 12px;              /* Space between buttons */
+  margin-top: 20px;
+}
+
+.btn-complete-trip {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-complete-trip:disabled {
+  background-color: #ccc;
+}
+
+.btn-cancel-trip {
+  background: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.error-text { color: #fa5252; margin-top: 10px; }
+.success-text { color: #0ca678; font-weight: bold; }
+
+/* Simple Loader */
+.spin-loader {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #28a745;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin: 10px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+.fare-display {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px dashed #ced4da;
+}
+
+.fare-display .label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+}
+
+.fare-display .amount {
+  display: block;
+  font-size: 32px;
+  font-weight: 800;
+  color: #212529;
+}
+
+.payment-selector {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.selector-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+.method-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.method-card {
+  border: 2px solid #e9ecef;
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-card input {
+  display: none; /* Hide the actual radio dot */
+}
+
+.method-card.active {
+  border-color: #28a745;
+  background-color: #f4fff6;
+}
+
+.method-card .icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.method-card .text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Stacking the buttons as requested */
+.trip-modal-footer.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

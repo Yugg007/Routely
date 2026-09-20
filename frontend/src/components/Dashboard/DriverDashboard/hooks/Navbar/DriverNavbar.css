@@ -1,0 +1,88 @@
+.dashboard-nav.compact-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+  height: 54px; 
+  position: sticky; /* Keeps it at the top */
+  top: 0;
+  width: 100%;
+}
+
+/* Status Badge Mini */
+.status-badge-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-badge-mini.active {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-badge-mini.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge-mini.active .status-dot {
+  animation: pulse-green 2s infinite;
+}
+
+/* Compact Toggle Button */
+.compact-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-on {
+  background: #111827;
+  color: #ffffff;
+}
+
+.mode-off {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+}
+
+.power-icon {
+  font-size: 1rem;
+}
+
+/* Mobile: Hide "GO" text to save even more space */
+@media (max-width: 400px) {
+  .btn-text {
+    font-size: 0.7rem;
+  }
+}
+
+@keyframes pulse-green {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}

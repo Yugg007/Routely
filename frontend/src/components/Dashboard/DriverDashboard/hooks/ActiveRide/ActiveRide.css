@@ -1,0 +1,112 @@
+/* --- Active Ride Tray (Bottom Sheet) --- */
+.active-ride-tray {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0; /* Modern "rounded top" look */
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column; /* Better for mobile stacking */
+  gap: 1.25rem;
+  z-index: 100;
+}
+
+.shadow-animation {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* --- Header Section --- */
+.tray-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ride-badge {
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #495057;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.passenger-meta h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #212529;
+}
+
+.contact-action {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  border-radius: 50px;
+  text-decoration: none;
+  color: #007bff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* --- Address Timeline Visual --- */
+.address-display {
+  display: flex;
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.dot-line-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.green { background: #28a745; }
+.dot.red { background: #dc3545; }
+.line { width: 2px; height: 30px; background: #dee2e6; margin: 4px 0; }
+
+.address-text .addr { margin-bottom: 12px; }
+.address-text small { color: #adb5bd; font-weight: 800; font-size: 10px; }
+.address-text p { margin: 2px 0 0 0; font-size: 14px; color: #495057; font-weight: 500; }
+
+/* --- Button Logic (Flexbox Stack) --- */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%; /* Spans full tray width on mobile */
+}
+
+.btn-status-update, .btn-cancel {
+  padding: 14px;
+  cursor: pointer;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+/* Dynamic State Colors */
+.state-accepted { background: #007bff; color: white; }
+.state-driver_arrived { background: #fd7e14; color: white; } /* Orange for Warning/Action */
+.state-on_trip { background: #28a745; color: white; }
+
+.btn-cancel {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.btn-status-update:active, .btn-cancel:active {
+  transform: scale(0.98);
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

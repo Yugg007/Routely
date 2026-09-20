@@ -1,0 +1,138 @@
+/* --- Overlay Positioning --- */
+.floating-overlay {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  z-index: 1000;
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* --- Header & Pulse Animation --- */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.pulse-icon {
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pulse-icon::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+/* --- Body & Content --- */
+.card-body {
+  margin-bottom: 20px;
+}
+
+.location-row {
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.location-row strong {
+  color: #6b7280;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.price-tag {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #059669; /* Emerald Green */
+}
+
+/* --- Footer & Buttons --- */
+.card-footer {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-accept {
+  background: #111827;
+  color: #ffffff;
+  flex: 2;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btn-decline {
+  background: #f3f4f6;
+  color: #4b5563;
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-accept:hover { background: #000000; }
+.btn-accept:disabled, .btn-decline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 5px;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #ff4d4d; /* Turns red on hover */
+}
+
+/* --- Keyframes --- */
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}

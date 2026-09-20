@@ -23,25 +23,32 @@ const MAP_OPTIONS = {
 
 const GoogleMapComponent = React.memo(({ center, mapRef, pickup, drop, routePath, drivers, actorState }) => {
 
-  // 2. Stable Icon Definitions (Use useMemo to prevent re-instantiating SVG paths)
-  const pickupIcon = useMemo(() => ({
-    path: window.google?.maps?.SymbolPath?.CIRCLE,
-    fillColor: "#000",
-    fillOpacity: 1,
-    strokeWeight: 2,
-    strokeColor: "#fff",
-    scale: 7,
-  }), []);
+const isOnTrip = actorState === USER_STATES.ON_TRIP
+// PICKUP: A simple, bright green circle with a white border
+  const pickupIcon = useMemo(() => {
+    if (!window.google) return null;
+    return {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      fillColor: "#22c55e", // Bright Green (Success/Start)
+      fillOpacity: 1,
+      strokeWeight: 3,
+      strokeColor: "#ffffff", // White border makes it pop
+      scale: 8,
+    };
+  }, []);
 
-  const dropIcon = useMemo(() => ({
-    path: "M 0,0 10,0 10,10 0,10 Z",
-    fillColor: "#4A63E7",
-    fillOpacity: 1,
-    strokeWeight: 2,
-    strokeColor: "#fff",
-    scale: 1.5,
-    anchor: window.google ? new window.google.maps.Point(5, 5) : null,
-  }), []);
+  // 🏁DROP-OFF: A "Backwards P" shape that looks like a Map Pin
+  const dropIcon = useMemo(() => {
+    if (!window.google) return null;
+    return {
+      path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+      fillColor: "#ef4444", // Bright Red (Stop/End)
+      fillOpacity: 1,
+      strokeWeight: 3,
+      strokeColor: "#ffffff",
+      scale: 6,
+    };
+  }, []);
 
   const polylineOptions = useMemo(() => ({
     strokeColor: "#4A63E7",
@@ -116,7 +123,7 @@ const GoogleMapComponent = React.memo(({ center, mapRef, pickup, drop, routePath
         />
       )}
 
-      {renderDrivers()}
+      {!isOnTrip && renderDrivers()}
     </GoogleMap>
   );
 });

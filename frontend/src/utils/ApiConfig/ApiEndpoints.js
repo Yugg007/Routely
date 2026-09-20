@@ -13,7 +13,7 @@ const ApiEndpoints = {
     "estimateFare" : "/trips/user/estimateFare",
     "requestRide" : "/trips/user/requestRide",
     "userRideDetails" : "/trips/user/rideDetails",
-    "cancelRide" : "/trips/user/cancelRide",
+    "userCancelRide" : "/trips/user/cancelRide",
 
     // Driver Perspective
     "acceptRide" : "/trips/driver/acceptRide",
@@ -21,6 +21,7 @@ const ApiEndpoints = {
     "getTripHistory" : "/trips/getTripHistory",
     "getActiveTrips" : "/trips/getActiveTrips",
     "driverRideDetails" : "/trips/driver/rideDetails",
+    "driverCancelRide" : "/trips/driver/cancelRide",
 
 
     "locationSocket" : "/ws/location",

@@ -60,7 +60,8 @@ const SideBar = React.memo(({
 
     const isMatching = actorState === "MATCHING";
     const isDriverFound = actorState === "WAITING_FOR_DRIVER";
-    const isFrozen = isMatching || isDriverFound;
+    const isOnTrip = actorState === USER_STATES.ON_TRIP;
+    const isFrozen = isMatching || isDriverFound || isOnTrip; // Freeze inputs during these states
     // const [isFrozen, setIsFrozen] = useState(false);
 
     const [booking, setBooking] = useState({
@@ -111,7 +112,8 @@ const SideBar = React.memo(({
             rideType: ride.rideTypeId,
             userId: user?.id,
             userMobNo: user?.mobileNo,
-            name: user?.name
+            name: user?.name,
+            fare : estimatedFare
         };
 
         try {

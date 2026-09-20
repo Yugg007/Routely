@@ -13,6 +13,7 @@ export const useLazySocket = (handleResponse, socketUrl) => {
     });
 
     const handleWebSocketRequestMessage = useCallback((key, payload) => {
+        console.log(`[WS SEND] Type: ${key}`, payload);
         if (readyState === 1) {
             sendMessage(JSON.stringify({ type: key, payload }));
         }

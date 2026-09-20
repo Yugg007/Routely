@@ -89,7 +89,7 @@ const UserDashboard = () => {
 
       switch (type) {
         case 'DriverLocationAround3Km':
-        case USER_WEBSOCKET_ACTIONS.AVAILABLE_DRIVER:
+        case USER_WEBSOCKET_ACTIONS.AVAILABLE_DRIVERS:
           if (Array.isArray(payload)) {
             // Update location only if we have driver data
             setLocation(prev => ({
@@ -98,7 +98,7 @@ const UserDashboard = () => {
             }));
           }
           break;
-        case USER_WEBSOCKET_ACTIONS.USER_LOCATION_SYNC:
+        case USER_WEBSOCKET_ACTIONS.USER_LOCATION_SYNCED:
           break;
 
         case STATE.STATE_CHANGE:
@@ -176,7 +176,7 @@ const UserDashboard = () => {
   }, [isLoaded]);
 
   const pickAndDropLocationUpdateRequired = () => {
-    if (actorState === USER_STATES.IDLE) return true;
+    if (actorState === USER_STATES.IDLE || actorState == null) return true;
     return false;
   }
   const getCurrentLocationAndAddress = useCallback(() => {
@@ -185,16 +185,24 @@ const UserDashboard = () => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: "Your location" };
 
         if (pickAndDropLocationUpdateRequired()) {
-          setLocation(prev => ({ ...prev, center: loc, pickup: loc }));
-          setSearch(prev => ({ ...prev, pickupQuery: loc.label }));
+          let newPickUp = location.pickup ? location.pickup : loc;
+          let newCenter = location.center || loc;
+          let newPickUpLabel = newPickUp.label || "Your location";
+          setLocation(prev => ({ ...prev, center: newCenter, pickup: newPickUp }));
+          setSearch(prev => ({ ...prev, pickupQuery: newPickUpLabel }));
 
           reverseGeocode(geocoderRef.current, loc, (addr) => {
-            setSearch(prev => ({ ...prev, pickupQuery: addr }));
-            setLocation(prev => ({ ...prev, pickup: { ...loc, label: addr } }));
+            let newPickUpQuery = search.pickupQuery || addr;
+            let newLabel = location.pickup?.label || addr;
+
+            setSearch(prev => ({ ...prev, pickupQuery: newPickUpQuery }));
+            setLocation(prev => ({ ...prev, pickup: { ...newPickUp, label: newLabel } }));
           });
         }
         else {
-          setLocation(prev => ({ ...prev, center: loc }));
+          console.log("Updating center and pickup : ", loc, location);
+          let newCenter = location.center || loc;
+          setLocation(prev => ({ ...prev, center: newCenter}));
         }
       });
     }
@@ -233,11 +241,14 @@ const UserDashboard = () => {
 
     const key = `${location.pickup.lat},${location.pickup.lng}_${location.drop.lat},${location.drop.lng}_${ride.rideTypeId}`;
 
+    console.log("Route cache key: ", key);
     if (routeCache[key]) {
       const { routePath, distanceKm, durationMin, bounds } = routeCache[key];
       setValuesToStates(routePath, distanceKm, durationMin, bounds);
       return;
     }
+
+    console.log("Computing new route for : ", location.pickup, location.drop);
 
     computeGoogleRoute(
       location.pickup,
@@ -250,7 +261,7 @@ const UserDashboard = () => {
         setValuesToStates(path, dkm, mins, null);
       }
     );
-  }, [location.drop, ride.rideTypeId, isLoaded]);
+  }, [location.drop, location.pickup, ride.rideTypeId, isLoaded]);
 
   // D. Handle Place Search Suggestions
   function handlePlaceSearch(input, type) {
@@ -259,6 +270,7 @@ const UserDashboard = () => {
       : null;
 
     searchPlaces(serviceRef.current, input, location.center, currentSuggestion, (results) => {
+      console.log("Place search results: ", results);
       setSearch(prev => ({
         ...prev,
         [type === "pickup" ? "pickupSuggestions" : "dropSuggestions"]: results
@@ -277,6 +289,7 @@ const UserDashboard = () => {
 
   function selectSuggestion(s, type) {
     // Handle "Use my location" selection
+    console.log("Selected suggestion: ", s, "Type: ", type);
     if (s.id === "__me__") {
       if (!location.pickup) return;
 
@@ -287,7 +300,7 @@ const UserDashboard = () => {
           pickupQuery: location.pickup.label,
           pickupSuggestions: []
         }));
-        setLocation(prev => ({ ...prev, center: location.pickup }));
+        setLocation(prev => ({ ...prev, center: location.pickup, pickup: location.pickup }));
       } else {
         // If setting drop to the current location coordinates
         setSearch(prev => ({
@@ -304,6 +317,7 @@ const UserDashboard = () => {
     geocodePlaceId(geocoderRef.current, s.id, (loc) => {
       if (type === "pickup") {
         // Update location and search objects for Pickup
+        console.log("Updating center and pickup : ", loc, location);
         setLocation(prev => ({
           ...prev,
           pickup: loc,
@@ -316,6 +330,7 @@ const UserDashboard = () => {
         }));
       } else {
         // Update location and search objects for Drop
+        console.log("Updating center and pickup : ", loc, location);
         setLocation(prev => ({
           ...prev,
           drop: loc

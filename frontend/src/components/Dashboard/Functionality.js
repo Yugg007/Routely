@@ -87,6 +87,7 @@ export function searchPlaces(service, input, center, currentSuggestion, cb) {
   service.getPlacePredictions(request, (predictions, status) => {
     let results = [];
     if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+      console.log("Google Places API returned predictions: ", predictions);
       results = predictions.map((p) => ({ id: p.place_id, label: p.description }));
     }
     if (currentSuggestion) results = [currentSuggestion, ...results];

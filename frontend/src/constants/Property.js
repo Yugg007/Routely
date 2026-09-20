@@ -1,5 +1,5 @@
 // Change this variable to "localhost" or your IP "10.103.72.253" as needed
-const BASE_HOST = "192.168.1.6"; 
+const BASE_HOST = "localhost"; 
 
 const Property = {
     SpringBackendPath: `https://${BASE_HOST}:8002`,

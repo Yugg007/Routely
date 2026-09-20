@@ -1,58 +1,44 @@
-/* DriverDashboard.css */
+/* --- LAYOUT FIX (The "Push-Down" Logic) --- */
 
-/* Root container */
-.driver-dashboard {
-  background-color:linear-gradient(180deg,#f3f4f6,#ffffff);
-  min-height: calc(100vh - 205px);
-  padding: 1.5rem;
-  font-family: "Inter", "Roboto", sans-serif;
-  color: #111827; /* dark gray text */
-}
-
-/* Header */
-.driver-dashboard header {
+.dashboard-root {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  width: 100%;
 }
 
-.driver-dashboard h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #111827;
+.dashboard-flow {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
-.driver-dashboard header button {
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+.map-section {
+  position: relative;
+  height: 45vh; 
+  width: 100%;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
-.driver-dashboard header button:hover {
-  transform: scale(1.05);
+.active-ride-area {
+  padding: 1.5rem;
+  background: #ffffff;
 }
 
-/* Status Badge */
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: inline-block;
+.incoming-rides-area {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  flex: 1; /* This is what pushes the footer */
 }
 
-/* Main layout */
-.driver-dashboard main {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+.offline-hero {
+  padding: 4rem 2rem;
+  text-align: center;
+  flex: 1;
 }
 
-/* Card styles */
+/* --- RESTORED ORIGINAL STYLES (Buttons, Cards, Badges) --- */
+
 .card {
   background: #fff;
   border-radius: 16px;
@@ -61,24 +47,14 @@
   transition: all 0.2s ease-in-out;
 }
 
-.card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
 }
 
-/* Map placeholder */
-.map-placeholder {
-  height: 260px;
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-  border-radius: 16px;
-  border: 2px dashed #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-/* Buttons */
 .btn {
   display: inline-block;
   padding: 0.6rem 1.2rem;
@@ -90,89 +66,32 @@
   transition: background 0.2s, transform 0.1s;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-}
+.btn-green { background-color: #10b981; color: #fff; }
+.btn-red { background-color: #ef4444; color: #fff; }
+.btn-blue { background-color: #3b82f6; color: #fff; }
 
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn-green {
-  background-color: #10b981;
-  color: #fff;
-}
-
-.btn-green:hover {
-  background-color: #059669;
-}
-
-.btn-red {
-  background-color: #ef4444;
-  color: #fff;
-}
-
-.btn-red:hover {
-  background-color: #dc2626;
-}
-
-.btn-blue {
-  background-color: #3b82f6;
-  color: #fff;
-}
-
-.btn-blue:hover {
-  background-color: #2563eb;
-}
-
-.btn-yellow {
-  background-color: #f59e0b;
-  color: #fff;
-}
-
-.btn-yellow:hover {
-  background-color: #d97706;
-}
-
-/* Info text */
 .text-muted {
   color: #6b7280;
   font-size: 0.9rem;
 }
 
-/* Notification area */
-.notification {
-  border-left: 4px solid #3b82f6;
-  padding: 0.75rem 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+.floating-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 420px;
+  z-index: 100;
+  animation: slideUp 0.3s ease-out;
 }
 
-.notification strong {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-/* Controls section */
-.controls button {
-  width: 100%;
-  margin-top: 0.5rem;
-  background: #f3f4f6;
-  border-radius: 10px;
-  padding: 0.7rem;
-  font-size: 0.9rem;
-  transition: background 0.2s;
-}
-
-.controls button:hover {
-  background: #e5e7eb;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .driver-dashboard main {
-    grid-template-columns: 1fr;
-  }
+/* Ensure Navbar doesn't overlap */
+.driver-navbar {
+  flex-shrink: 0;
 }

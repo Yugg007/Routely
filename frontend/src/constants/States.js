@@ -1,5 +1,7 @@
 const STATE = {
     DRIVER_STATES: {
+        IDLE : "IDLE",
+        WAITING_FOR_RIDE : "WAITING_FOR_RIDE",
         OFFLINE: "OFFLINE",                      // Driver is not working.
         ONLINE_IDLE: "IDLE",                     // Online, no active ride, waiting for requests.
         ACCEPTED: "ACCEPTED",                    // Accepted a ride, moving toward pickup.

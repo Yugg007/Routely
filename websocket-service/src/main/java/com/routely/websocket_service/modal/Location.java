@@ -10,6 +10,8 @@ public class Location implements Serializable {
 	private String timestamp;
 	private Integer accuracy;
 	private String label;
+	private String name;
+	private String mobileNo;
 
 	public Long getId() {
 		return id;
@@ -57,6 +59,22 @@ public class Location implements Serializable {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getMobileNo() {
+		return mobileNo;
+	}
+
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
 	}
 
 }

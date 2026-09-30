@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.routely.shared.dto.Actor;
-import com.routely.shared.dto.RideCancelledEvent;
+import com.routely.shared.dto.RideEvent;
 import com.routely.shared.enums.ActorType;
 import com.routely.shared.model.RideRequest;
 import com.routely.shared.utils.Constants;
@@ -17,7 +17,7 @@ import com.routely.websocket_service.handler.DriverSocketHandler;
 import com.routely.websocket_service.handler.UserSocketHandler;
 
 @Service
-public class KafkaService {
+public class KafkaConsumerService {
 	@Autowired
 	private DriverSocketHandler driverSocketHandler;
 	@Autowired
@@ -26,19 +26,19 @@ public class KafkaService {
 	private ObjectMapper objectMapper;
 
 	private final static String ROUTELY_TRIP_TOPIC = Constants.ROUTELY_TRIP_TOPIC;
-	private final static String ROUTELY_USER_STATE_TOPIC = Constants.ROUTELY_USER_STATE_TOPIC;
+	private final static String ROUTELY_STATE_TOPIC = Constants.ROUTELY_STATE_TOPIC;
 	private final static String EVENT_RIDE_ACCEPTED = Constants.EVENT_RIDE_ACCEPTED;
 	private final static String EVENT_RIDE_REQUESTED = Constants.EVENT_RIDE_REQUESTED;
-	private final static String STATE_TRANSFER = Constants.STATE_TRANSFER;
-	private final String EVENT_RIDE_CANCELLED = Constants.EVENT_RIDE_CANCELLED;
-	private final String EVENT_RIDE_CANCELLED_BY_USER = Constants.EVENT_RIDE_CANCELLED_BY_USER;
-	private final String EVENT_RIDE_CANCELLED_BY_DRIVER = Constants.EVENT_RIDE_CANCELLED_BY_DRIVER;
+	private final static String EVENT_STATE_TRANSFER = Constants.EVENT_STATE_TRANSFER;
+	private final static String EVENT_STATE_ACKNOWLEDGE = Constants.EVENT_STATE_ACKNOWLEDGE;
+	private final static String EVENT_RIDE_CANCELLED = Constants.EVENT_RIDE_CANCELLED;
+	private final static String EVENT_RIDE_COMPLETED = Constants.EVENT_RIDE_COMPLETED;
 
 	/**
 	 * Consume message from Kafka (Consumer). This will be auto-started by Spring.
 	 */
 
-	@KafkaListener(topics = ROUTELY_TRIP_TOPIC, groupId = "trip-service-group")
+	@KafkaListener(topics = ROUTELY_TRIP_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
 	public void tripConsumer(ConsumerRecord<String, String> record) {
 		try {
 			String key = record.key();
@@ -55,17 +55,23 @@ public class KafkaService {
 			} 
 			else if (EVENT_RIDE_ACCEPTED.equals(key)) {
 				RideRequest rideRequest = preprocessing(value);
+				driverSocketHandler.handleRideAccepted(rideRequest);
 				userSocketHandler.sendAcceptedRideToUser(rideRequest);
 
 			}
 			else if(EVENT_RIDE_CANCELLED.equals(key)) {
-				RideCancelledEvent event = objectMapper.readValue(value, RideCancelledEvent.class);
-				if(EVENT_RIDE_CANCELLED_BY_DRIVER.equals(value)) {
+				RideEvent event = objectMapper.readValue(value, RideEvent.class);
+				if(ActorType.DRIVER.equals(event.getCancelledBy())) {
 					driverSocketHandler.handleRideCancellation(event);
 				}
-				else {
+				else if(ActorType.USER.equals(event.getCancelledBy())) {
 					userSocketHandler.handleRideCancellation(event);
 				}
+			}
+			else if(EVENT_RIDE_COMPLETED.equals(key)) {
+				RideRequest rideRequest = preprocessing(value);
+				driverSocketHandler.handleRideCompleted(rideRequest);
+				userSocketHandler.handleRideCompleted(rideRequest);
 			}
 			
 			else {
@@ -77,7 +83,7 @@ public class KafkaService {
 		}
 	}
 
-	@KafkaListener(topics = ROUTELY_USER_STATE_TOPIC, groupId = "state-service-group")
+	@KafkaListener(topics = ROUTELY_STATE_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
 	public void stateConsumer(ConsumerRecord<String, String> record) {
 		try {
 			String key = record.key();
@@ -86,7 +92,7 @@ public class KafkaService {
 			System.out.println("Consumed Key: " + key);
 			System.out.println("Consumed Value: " + value);
 			ObjectMapper map = new ObjectMapper();
-			if (STATE_TRANSFER.equals(key)) {
+			if (EVENT_STATE_ACKNOWLEDGE.equals(key)) {
 				Actor event = map.readValue(value, Actor.class);
 				if (ActorType.USER.equals(event.getActorType())) {
 					userSocketHandler.handleStateChange(event);

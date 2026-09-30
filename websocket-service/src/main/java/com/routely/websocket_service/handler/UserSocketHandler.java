@@ -2,32 +2,23 @@ package com.routely.websocket_service.handler;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.routely.shared.dto.Actor;
-import com.routely.shared.dto.RideCancelledEvent;
-import com.routely.shared.enums.SessionState;
+import com.routely.shared.dto.RideEvent;
 import com.routely.shared.model.RideRequest;
 import com.routely.shared.utils.Constants;
-import com.routely.shared.utils.SessionStateValidator;
 import com.routely.websocket_service.config.JsonUtils;
 import com.routely.websocket_service.dto.WsMessage;
-import com.routely.websocket_service.modal.Location;
-import com.routely.websocket_service.modal.UserLocation;
-import com.routely.websocket_service.utils.GeoUtils;
 
 @Component
 public class UserSocketHandler extends TextWebSocketHandler {
@@ -39,8 +30,9 @@ public class UserSocketHandler extends TextWebSocketHandler {
 	
 	private final Map<Long, WebSocketSession> onlineUsers = new ConcurrentHashMap<>();
 	
-	private final String AVAILABLE_DRIVER = Constants.AVAILABLE_DRIVER;
+	private final String AVAILABLE_DRIVERS = Constants.AVAILABLE_DRIVERS;
 	private final String USER_LOCATION_PUSH = Constants.USER_LOCATION_PUSH;
+	private final String DRIVER_LOCATION_SYNCED = Constants.DRIVER_LOCATION_SYNCED;
 	private final String ID = Constants.ID;
 	
 	public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
@@ -48,11 +40,14 @@ public class UserSocketHandler extends TextWebSocketHandler {
 		
 		WsMessage wsMessage = jsonUtils.fromJson(message.getPayload(), WsMessage.class);
 		if(wsMessage != null) {
-			if(AVAILABLE_DRIVER.equals(wsMessage.getType())) {
+			if(AVAILABLE_DRIVERS.equals(wsMessage.getType())) {
 				userHandler.availableDriver(wsMessage, session);
 			}
 			else if(USER_LOCATION_PUSH.equals(wsMessage.getType())) {
 				userHandler.locationUpdate(wsMessage, session);
+			}
+			else if(DRIVER_LOCATION_SYNCED.equals(wsMessage.getType())) {
+				userHandler.driverLocationSynced(wsMessage, session);
 			}
 		}
 	}
@@ -111,9 +106,18 @@ public class UserSocketHandler extends TextWebSocketHandler {
 	}
 
 
-	public void handleRideCancellation(RideCancelledEvent event) {
+	public void handleRideCancellation(RideEvent event) {
 		// TODO Auto-generated method stub
 		System.out.println(event.toString());
+		WebSocketSession session = onlineUsers.get(event.getUserId());
+		userHandler.handleRideCancellation(session, event);
+		
+	}
+
+
+	public void handleRideCompleted(RideRequest rideRequest) {
+		// TODO Auto-generated method stub
+		userHandler.handleRideCompleted(rideRequest);
 		
 	}
 

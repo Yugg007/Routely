@@ -10,17 +10,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.routely.websocket_service.utils.AesUtil;
+import com.routely.shared.utils.AesUtil;
 import com.routely.shared.utils.Constants;
-import com.routely.websocket_service.utils.JwtUtil;
+import com.routely.shared.utils.JwtUtil;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class AuthHandshakeInterceptor implements HandshakeInterceptor{
-	@Autowired
-	private JwtUtil jwtUtil;
 	
 	private final String ID = Constants.ID;
 
@@ -39,7 +37,13 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor{
 	                    try {
 	                        // 1. Decrypt and Extract
 	                        String token = AesUtil.decrypt(cookie.getValue());
-	                        String id = jwtUtil.extractId(token);
+	                        String id = null;
+							try {
+								id = JwtUtil.getSubject(token);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 
 	                        // 2. Validate
 	                        if (id != null && !id.isEmpty()) {

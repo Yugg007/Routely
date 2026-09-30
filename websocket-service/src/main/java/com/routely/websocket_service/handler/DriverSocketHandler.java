@@ -11,7 +11,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.routely.shared.dto.Actor;
-import com.routely.shared.dto.RideCancelledEvent;
+import com.routely.shared.dto.RideEvent;
 import com.routely.shared.model.RideRequest;
 import com.routely.shared.utils.Constants;
 import com.routely.websocket_service.config.JsonUtils;
@@ -29,13 +29,10 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 	
 	private final String DRIVER_LOCATION_PUSH = Constants.DRIVER_LOCATION_PUSH;
 	private final String DRIVER_ARRIVED = Constants.DRIVER_ARRIVED;
-	private final String DRIVER_DECLINED = Constants.DRIVER_DECLINED;
-	private final String OFFER_RIDE_TO_DRIVER = Constants.OFFER_RIDE_TO_DRIVER;
+	private final String DRIVER_DECLINED_OFFER = Constants.DRIVER_DECLINED_OFFER;
 	
 	private final Map<Long, WebSocketSession> onlineDrivers = new ConcurrentHashMap<>();
 
-
-	
 	@Override
 	public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 	    String payload = message.getPayload();
@@ -47,11 +44,10 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 				driverHandler.locationUpdate(session, wsMessage);
 			}
 			else if(DRIVER_ARRIVED.equals(wsMessage.getType())) {
-				
 				driverHandler.handleDriverArrived(session, wsMessage);
 			}
-			else if(DRIVER_DECLINED.equals(wsMessage.getType())) {
-				//need to implement
+			else if(DRIVER_DECLINED_OFFER.equals(wsMessage.getType())) {
+				driverHandler.handleRideDecline(session, wsMessage);
 			}
 
 		}
@@ -65,7 +61,7 @@ public class DriverSocketHandler extends TextWebSocketHandler {
         Long driverId = getDriverIdFromSession(session);
         if(driverId != null) {
         	onlineDrivers.put(driverId, session);
-        	driverHandler.sendRideToDriver(session, Long.valueOf(driverId));
+        	driverHandler.sendAcknowledgement(session, "Connection established");
         	System.out.println("Driver connected: " + driverId);        	
         }
     }
@@ -98,10 +94,7 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 	public void sendRideRequest(RideRequest rideRequest) {		
 		driverHandler.addRideRequestToCache(rideRequest);
 		for(Map.Entry<Long, WebSocketSession> driver : onlineDrivers.entrySet()) {
-			boolean isDriverDistanceInRange = driverHandler.isDriverDistanceInRange(driver.getKey(), rideRequest, driver.getValue());
-			if(isDriverDistanceInRange) {
-				driverHandler.rideOfferedToDriver(driver.getKey(), rideRequest, driver.getValue());
-			}
+			driverHandler.attemptRideOffer(driver.getKey(), driver.getValue(), rideRequest);
 		}
 		
 	}
@@ -112,12 +105,27 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 		driverHandler.handleStateChange(session, event);
 	}
 
-
-
-
-	public void handleRideCancellation(RideCancelledEvent event) {
+	public void handleRideCancellation(RideEvent event) {
 		// TODO Auto-generated method stub
 		System.out.println(event.toString());
+		WebSocketSession session = onlineDrivers.get(event.getDriverId());
+		driverHandler.handleRideCancellation(session, event);
 		
 	}
+
+	public void handleRideAccepted(RideRequest rideRequest) {
+		// TODO Auto-generated method stub
+		WebSocketSession session = onlineDrivers.get(rideRequest.getDriverId());
+		driverHandler.handleRideAccepted(rideRequest, session);
+		
+	}
+
+
+
+
+	public void handleRideCompleted(RideRequest rideRequest) {
+		// TODO Auto-generated method stub
+		driverHandler.handleRideCompleted(rideRequest);
+	}
+
 }

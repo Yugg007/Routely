@@ -18,7 +18,7 @@ const DriverNavbar = React.memo(({
       return isOnline ? "ONLINE" : "OFFLINE";
     }
     // Keeps it short: "ON TRIP" instead of "ON_TRIP"
-    return actorState.replace(/_/g, ' ');
+    return actorState?.replace(/_/g, ' ');
   }, [actorState, isOnline, socketConnected]);
 
   const canGoOffline = useMemo(() => {

@@ -23,10 +23,10 @@
 
     <dependencies>
         <!-- Spring Cloud Gateway -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway</artifactId>
-        </dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
+</dependency>
 
         <!-- WebFlux for reactive support -->
         <dependency>
@@ -75,7 +75,32 @@
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.11.5</version>
 			<scope>runtime</scope>
-		</dependency>	    
+		</dependency>	 
+		<dependency>
+		    <groupId>io.netty</groupId>
+		    <artifactId>netty-resolver-dns-native-macos</artifactId>
+		    <classifier>osx-aarch_64</classifier>
+		    <scope>runtime</scope>
+		</dependency>
+		<dependency>
+	        <groupId>com.routely</groupId>
+	        <artifactId>routely-common</artifactId>
+	        <version>1.0.0</version>
+	    </dependency>
+	    
+	    
+<!-- Bouncy Castle Provider -->
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk18on</artifactId>
+        <version>1.78.1</version>
+    </dependency>
+    <!-- Bouncy Castle PKIX/PEM Parser support -->
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk18on</artifactId>
+        <version>1.78.1</version>
+    </dependency>	    
         
     </dependencies>
 

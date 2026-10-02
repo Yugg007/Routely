@@ -6,35 +6,121 @@
   width: 100%;
 }
 
+.dashboard-root.driver-dashboard {
+  min-height: calc(100vh - 70px);
+  padding: 0;
+  background: #f4f7f8;
+  color: #17202c;
+}
+
 .dashboard-flow {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 .map-section {
   position: relative;
-  height: 45vh; 
+  height: clamp(360px, 56vh, 680px);
   width: 100%;
   flex-shrink: 0;
   z-index: 1;
+  overflow: hidden;
+  background: #eaf0f3;
+  box-shadow: 0 10px 28px rgba(22, 35, 49, 0.1);
 }
 
 .active-ride-area {
-  padding: 1.5rem;
-  background: #ffffff;
+  padding: 24px clamp(16px, 4vw, 48px);
+  background: #f4f7f8;
 }
 
 .incoming-rides-area {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  flex: 1; /* This is what pushes the footer */
+  background: #f4f7f8;
+  padding: 4px clamp(16px, 4vw, 48px) 32px;
+  flex: 1;
 }
 
 .offline-hero {
-  padding: 4rem 2rem;
-  text-align: center;
-  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: min(680px, calc(100vh - 124px));
+  padding: 32px 20px;
+  background-color: #f4f7f8;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.55) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.offline-panel {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  width: min(100%, 620px);
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid #e1e8eb;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 48px rgba(22, 35, 49, 0.1);
+}
+
+.offline-status-mark {
+  width: 11px;
+  height: 11px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+  box-shadow: 0 0 0 5px #f1f5f9;
+}
+
+.offline-copy { min-width: 0; }
+
+.offline-eyebrow {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.offline-copy h2 {
+  margin: 8px 0 7px;
+  color: #17202c;
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.offline-copy p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.driver-primary-action {
+  min-height: 44px;
+  margin-top: 22px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #147d57;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.driver-primary-action:hover {
+  background: #106747;
+  transform: translateY(-1px);
+}
+
+.driver-primary-action:focus-visible {
+  outline: 3px solid rgba(20, 125, 87, 0.25);
+  outline-offset: 3px;
 }
 
 /* --- RESTORED ORIGINAL STYLES (Buttons, Cards, Badges) --- */
@@ -84,6 +170,20 @@
   max-width: 420px;
   z-index: 100;
   animation: slideUp 0.3s ease-out;
+}
+
+@media (max-width: 700px) {
+  .map-section {
+    height: clamp(320px, 52vh, 500px);
+  }
+
+  .active-ride-area {
+    padding: 16px 12px;
+  }
+
+  .incoming-rides-area {
+    padding: 4px 12px 24px;
+  }
 }
 
 @keyframes slideUp {

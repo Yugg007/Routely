@@ -52,6 +52,10 @@ public class UserService {
 		return userRepository.findByEmail(request.getEmail()).map(user -> {
 			if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 				SessionState state = actorSessionService.getActorState(user.getId());
+				if(state == null) {
+					actorSessionService.updateSessionState(user.getId(), SessionState.IDLE);
+					state = actorSessionService.getActorState(user.getId());
+				}
 				return new AuthResponse(user, "Login successful!", state);
 			} else {
 				throw new RuntimeException("Invalid credentials!");

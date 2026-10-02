@@ -14,8 +14,8 @@ public class KafkaConsumerService {
 	@Autowired
 	private ActorSessionService actorSessionService;
 
-	private final static String ROUTELY_TRIP_STATE_TOPIC = Constants.ROUTELY_TRIP_STATE_TOPIC;
-	private final static String STATE_TRANSFER = Constants.STATE_TRANSFER;
+	private final static String ROUTELY_STATE_TOPIC = Constants.ROUTELY_STATE_TOPIC;
+	private final static String EVENT_STATE_TRANSFER = Constants.EVENT_STATE_TRANSFER;
 
 	/**
 	 * Consume message from Kafka (Consumer). This will be auto-started by Spring.
@@ -23,7 +23,7 @@ public class KafkaConsumerService {
 	 * @throws JsonMappingException 
 	 */
 
-	@KafkaListener(topics = ROUTELY_TRIP_STATE_TOPIC, groupId = "trip-service-group")
+	@KafkaListener(topics = ROUTELY_STATE_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
 	public void consume(ConsumerRecord<String, String> record) throws JsonMappingException, JsonProcessingException {
 		String key = record.key();
 		String value = record.value();
@@ -31,7 +31,7 @@ public class KafkaConsumerService {
 		System.out.println("Consumed Key: " + key);
 		System.out.println("Consumed Value: " + value);
 		
-		if (STATE_TRANSFER.equals(key)) {
+		if (EVENT_STATE_TRANSFER.equals(key)) {
 			actorSessionService.handleStateChangeEvent(value);
 		}
 	}

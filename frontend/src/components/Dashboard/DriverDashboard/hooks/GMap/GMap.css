@@ -68,6 +68,34 @@
   border-radius: 8px;
 }
 
+.gps-status-pill {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 226, 228, 0.95);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(22, 35, 49, 0.12);
+  color: #52616b;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.gps-status-pill::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d39a27;
+  content: "";
+  animation: gpsPulse 1.5s ease-in-out infinite;
+}
+
 /* --- UI Controls (Recenter Button) --- */
 .recenter-btn {
   position: absolute;
@@ -133,6 +161,10 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes gpsPulse {
+  50% { opacity: 0.45; }
 }
 
 /* --- Google Maps Internal UI Overrides --- */

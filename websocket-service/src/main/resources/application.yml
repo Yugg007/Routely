@@ -1,16 +1,18 @@
 server:
-   port: 8004
-   ssl:
-      enabled: true
-      key-store: src/main/resources/websocket-service-keystore.p12
-      key-store-password: <password>
-      key-store-type: PKCS12
-      key-alias: websocket-service
-
-      trust-store: src/main/resources/truststore.p12
-# 🔑 Truststore (so user-service trusts Eureka's certificate)
-      trust-store-password: <password>
-      trust-store-type: PKCS12
+  port: 8004
+  ssl:
+    enabled: true
+    # FIX 1: Use 'classpath:' instead of 'src/main/resources/' so it works inside a JAR/Docker
+    key-store: classpath:routely.p12
+    # FIX 2: Corrected password from 'iampass' to 'routely123'
+    key-store-password: routely123
+    key-store-type: PKCS12
+    key-alias: routely
+    key-password: routely123 # Added explicitly
+    
+    trust-store: classpath:truststore.p12
+    trust-store-password: routely123
+    trust-store-type: PKCS12
 
 spring:
    application:
@@ -19,9 +21,9 @@ spring:
    kafka:
       bootstrap-servers: localhost:9092
       properties:
-         security.protocol: PLAINTEXT
+       security.protocol: PLAINTEXT
       consumer:
-           group-id: webservice-service-group
+           group-id: websocket-service-group
            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
            auto-offset-reset: latest
@@ -40,11 +42,26 @@ eureka:
       non-secure-port-enabled: false
       prefer-ip-address: false
       instance-id: ${spring.application.name}:${server.port}
+      secure-virtual-host-name: ${spring.application.name}
+      home-page-url: https://${eureka.instance.hostname}:${server.port}/
+      status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+      health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
       metadata-map:
          secure: true
 
    client:
-      register-with-eureka: true # server itself doesn’t register
+      register-with-eureka: true
       fetch-registry: true
       service-url:
          defaultZone: https://localhost:8761/eureka/
+      
+   tls:
+     enabled: true
+     trust-store: classpath:truststore.p12
+     trust-store-password: routely123
+     trust-store-type: PKCS12
+
+     key-store: classpath:routely.p12
+     key-store-password: routely123
+     key-store-type: PKCS12
+     key-password: routely123

@@ -1,14 +1,16 @@
 server:
-   port: 8005
-   ssl:
-      enabled: true
-      key-store: classpath:trip-service-keystore.p12
-      key-store-password: <password>
-      key-store-type: PKCS12
-      key-alias: trip-service
-      trust-store: classpath:truststore.p12
-      trust-store-password: <password>
-      trust-store-type: PKCS12
+  port: 8005
+  ssl:
+    enabled: true
+    key-store: classpath:routely.p12
+    key-store-password: routely123
+    key-store-type: PKCS12
+    key-alias: routely
+    key-password: routely123
+    
+    trust-store: classpath:truststore.p12
+    trust-store-password: routely123
+    trust-store-type: PKCS12
 
 spring:
    application:
@@ -25,14 +27,13 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      group-id: user-service-group
+      group-id: trip-service-group
       auto-offset-reset: earliest
 
-
    datasource:
-      url: jdbc:mysql://localhost:3306/routely
+      url: jdbc:mysql://127.0.0.1:3306/routely?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       username: root
-      password: <password>
+      password: root123
       driver-class-name: com.mysql.cj.jdbc.Driver
 
    jpa:
@@ -50,6 +51,10 @@ eureka:
       non-secure-port-enabled: false
       prefer-ip-address: false
       instance-id: ${spring.application.name}:${server.port}
+      secure-virtual-host-name: ${spring.application.name}
+      home-page-url: https://${eureka.instance.hostname}:${server.port}/
+      status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+      health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
       metadata-map:
          secure: true
 
@@ -58,6 +63,20 @@ eureka:
       fetch-registry: true
       service-url:
          defaultZone: https://localhost:8761/eureka/
+      jersey:
+         enabled: true
+      
+      tls:
+        enabled: true
+        trust-store: classpath:truststore.p12
+        trust-store-password: routely123
+        trust-store-type: PKCS12
+        key-store: classpath:routely.p12
+        key-store-password: routely123
+        key-store-type: PKCS12
+        key-password: routely123
+        key-alias: routely
+
 
 fare:
    base: 50

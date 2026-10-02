@@ -35,8 +35,6 @@ public class UserHandler {
 	private final String REDIS_DRIVER_LOCATION_PREFIX = Constants.REDIS_DRIVER_LOCATION_PREFIX;
 	private final String USER_LOCATION_SYNCED = Constants.USER_LOCATION_SYNCED;
 	private final String STATE_CHANGE = Constants.STATE_CHANGE;
-	private final String REDIS_RIDE_DATA_PREFIX = Constants.REDIS_RIDE_DATA_PREFIX;
-	private final String REDIS_PENDING_RIDE_KEYS = Constants.REDIS_PENDING_RIDE_KEYS;
 	private final String DRIVER_LOCATION_SYNCED = Constants.DRIVER_LOCATION_SYNCED;
 
     public List<Location> findDriversInRadius(double userLat, double userLng, double radiusKm) {
@@ -116,10 +114,8 @@ public class UserHandler {
 	public void handleRideCancellation(WebSocketSession session, RideEvent event) {
 		// TODO Auto-generated method stub
 		
-		String rideKey = REDIS_RIDE_DATA_PREFIX + event.getRideId();
-		redisHandler.delete(rideKey);
-		
-		redisHandler.removeFromRedisSet(REDIS_PENDING_RIDE_KEYS, String.valueOf(event.getRideId()));		
+		redisHandler.deleteRideData(event.getRideId());
+		redisHandler.removeRideFromQueue(event.getRideId());
 	}
 
 	public void handleRideCompleted(RideRequest rideRequest) {

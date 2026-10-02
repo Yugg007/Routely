@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routely.shared.dto.Actor;
 import com.routely.shared.enums.SessionState;
 import com.routely.shared.utils.ActorStateManagement;
+import com.routely.user_service.config.RedisHandler;
 import com.routely.user_service.model.ActorSession;
 import com.routely.user_service.repository.ActorSessionRepository;
 
@@ -16,10 +17,14 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class ActorSessionService {
-
-    private final KafkaProducerService kafkaProducerService;
+	@Autowired
+    private KafkaProducerService kafkaProducerService;
+	
 	@Autowired
 	private ActorSessionRepository actorSessionRepository; 
+	
+	@Autowired
+	private RedisHandler redisHandler;
 	
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -36,8 +41,9 @@ public class ActorSessionService {
 	    // 2. If 0 rows affected, the actor doesn't exist yet; perform an Upsert
 	    if (rowsAffected == 0) {
 	        actorSessionRepository.save(new ActorSession(id, SessionState.IDLE));
-	        return SessionState.IDLE;
+	        state = SessionState.IDLE;
 	    }
+	    redisHandler.setStateValue(id, state);
 	    
 	    return state;
 	}
@@ -52,14 +58,15 @@ public class ActorSessionService {
 
 	public SessionState getActorState(Long id) {
 		// TODO Auto-generated method stub
-		try {
-			return actorSessionRepository.getCurrentState(id);
-			
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+		SessionState state = redisHandler.getStateValue(id);
+		if(state == null) {
+			state = actorSessionRepository.getCurrentState(id);
+			redisHandler.setStateValue(id, state);
 		}
-		return SessionState.IDLE;
+		if(state == null) {
+			return SessionState.IDLE;
+		}
+		return state;
 	}
 	
 	public void handleStateChangeEvent(Long id, SessionState state) {

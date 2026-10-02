@@ -24,4 +24,7 @@ message RideRequest {
     optional int64 driverId = 12;
     optional string driverName = 13;
     optional string driverMobNo = 14;
+    
+    optional string fare = 15;
+    optional string paymentMethod = 16;
 }

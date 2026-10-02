@@ -1,4 +1,5 @@
-package com.routely.user_service.controller.utils;
+package com.routely.shared.utils;
+
 
 import java.security.SecureRandom;
 import java.util.Base64;

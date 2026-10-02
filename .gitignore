@@ -81,8 +81,6 @@ Deployment/
 
 # Maven
 .mvn/
-mvnw
-mvnw.cmd
 
 # IDE Specific (Eclipse/STS/IntelliJ)
 .settings/
@@ -95,3 +93,7 @@ mvnw.cmd
 
 # Mac specific
 .DS_Store
+
+/files/
+/ssl/
+/Dashboard copy/

@@ -57,6 +57,7 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
         @Param("cancellableStatuses") List<RideStatus> cancellableStatuses
     );
 	
+	@Transactional
 	@Modifying
 	@Query("UPDATE Ride r SET r.status = :targetStatus, r.driverId = :driverId, r.updatedOn = :now " +
 	       "WHERE r.rideId = :rideId AND r.status = :requiredStatus")
@@ -75,4 +76,14 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     @Query("UPDATE Ride r SET r.status = 'ON_TRIP', r.isPinVerified = true " +
            "WHERE r.rideId = :rideId AND r.otpPin = :inputPin AND r.status = :status")
     int verifyPinAndStartTrip(@Param("rideId") Long rideId, @Param("inputPin") String inputPin, @Param("status") RideStatus accepted);
+
+	@Transactional
+	@Modifying
+	@Query("UPDATE Ride r SET r.status = :targetStatus, r.driverId = :driverId, r.updatedOn = :now " +
+	       "WHERE r.rideId = :rideId AND r.status = :requiredStatus")
+	int atomicCompleteRide(@Param("rideId") Long rideId, 
+	                     @Param("driverId") Long driverId, 
+	                     @Param("targetStatus") RideStatus targetStatus, 
+	                     @Param("requiredStatus") RideStatus requiredStatus,
+	                     @Param("now") LocalDateTime now);
 }

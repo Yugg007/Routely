@@ -69,8 +69,7 @@ public class DriverSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         Long driverId = getDriverIdFromSession(session);
-        if(driverId != null && onlineDrivers.containsKey(driverId)) {
-        	onlineDrivers.remove(driverId);
+		if(driverId != null && onlineDrivers.remove(driverId, session)) {
         	driverHandler.removeDriverDetailFromCache(Long.valueOf(driverId));
         	System.out.println("Driver disconnected: " + driverId);
         }
@@ -93,8 +92,12 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 	
 	public void sendRideRequest(RideRequest rideRequest) {		
 		driverHandler.addRideRequestToCache(rideRequest);
-		for(Map.Entry<Long, WebSocketSession> driver : onlineDrivers.entrySet()) {
-			driverHandler.attemptRideOffer(driver.getKey(), driver.getValue(), rideRequest);
+		for(Long driverId : driverHandler.findNearbyDriverIds(
+				rideRequest.getStartLat(), rideRequest.getStartLng(), 3.0)) {
+			WebSocketSession session = onlineDrivers.get(driverId);
+			if(session != null) {
+				driverHandler.attemptRideOffer(driverId, session, rideRequest);
+			}
 		}
 		
 	}
@@ -113,11 +116,10 @@ public class DriverSocketHandler extends TextWebSocketHandler {
 		
 	}
 
-	public void handleRideAccepted(RideRequest rideRequest) {
+	public boolean handleRideAccepted(RideRequest rideRequest) {
 		// TODO Auto-generated method stub
 		WebSocketSession session = onlineDrivers.get(rideRequest.getDriverId());
-		driverHandler.handleRideAccepted(rideRequest, session);
-		
+		return driverHandler.handleRideAccepted(rideRequest, session);
 	}
 
 

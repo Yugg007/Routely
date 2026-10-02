@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, act } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useWebSocket from "react-use-websocket";
+
 import { BackendService } from "../../../utils/ApiConfig/ApiMiddleWare";
 import ApiEndpoints from "../../../utils/ApiConfig/ApiEndpoints";
 import Property from "../../../constants/Property";
@@ -10,6 +11,7 @@ import WebSocketAction from "../../../constants/WebSocketAction";
 import STATE from "../../../constants/States";
 import { ACTOR_STATE, ID, updateUserWorkflowState } from "../../../store/authCacheSlice";
 import { useLazySocket } from "../../WebSocketHandler/useLazySocket";
+import { haversineDistanceKm } from "../Functionality";
 
 const WS_URL = Property.Driver_WS_URL;
 const DRIVER_STATES = STATE.DRIVER_STATES;
@@ -17,25 +19,22 @@ const DEFAULT_ACCEPT_SECONDS = Constants.DRIVER_DEFAULT_ACCEPT_SECONDS;
 const DRIVER_WEBSOCKET_ACTIONS = WebSocketAction.DRIVER_WEBSOCKET_ACTIONS;
 
 import "./DriverDashboard.css";
+
+import GMap from "./hooks/GMap/GMap";
 import ActiveRide from "./hooks/ActiveRide/ActiveRide";
 import RideRequestOverlay from "./hooks/RideRequestOverlay/RideRequestOverlay";
-import GMap from "./hooks/GMap/GMap";
 import DriverTripStartModal from "./hooks/DriverTripStartModal/DriverTripStartModal";
 import IncomingRides from "./hooks/IncomingRides/IncomingRides";
-import { haversineDistanceKm } from "../Functionality";
-import { set } from "lodash";
-import { FaS } from "react-icons/fa6";
 import DriverTripCompleteModal from "./hooks/DriverTripCompleteModal/DriverTripCompleteModal";
 import DriverNavbar from "./hooks/Navbar/DriverNavbar";
-
-
-
 
 
 export default function DriverDashboard() {
   const dispatch = useDispatch();
   const id = useSelector(ID);
   const actorState = useSelector(ACTOR_STATE);
+  const user = useSelector((state) => state?.authCache?.user);
+
 
   const [isOnline, setIsOnline] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
@@ -43,9 +42,10 @@ export default function DriverDashboard() {
   const [incomingRides, setIncomingRides] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
   const [error, setError] = useState(null);
-  const [showDriverActionButton, setShowDriverActionButton] = useState(true);
+  const [driverActionEnabled, setDriverActionEnabled] = useState(false);
+  const [acceptingRideId, setAcceptingRideId] = useState(null);
 
-  const lastSentPos = useRef({ lat: 0, lng: 0, timestamp: 0 });
+  const lastSentPos = useRef(null);
   const locationWatchId = useRef(null);
   const acceptTimer = useRef(null);
 
@@ -57,27 +57,14 @@ export default function DriverDashboard() {
   const isDriverBusy = useCallback(() => {
     const busyStates = [DRIVER_STATES.ACCEPTED, DRIVER_STATES.DRIVER_ARRIVED, DRIVER_STATES.ON_TRIP];
     return busyStates.includes(actorState);
-  })
-const handleRideOffered = useCallback((ride) => {
-  // We use the setter for incomingRides to get the MOST RECENT state 
-  // without needing it in the dependency array.
-  setIncomingRides((prevPool) => {
-    const isPresentInPool = prevPool.some(r => r.rideId === ride.rideId);
+  }, [actorState]);
 
-    if (!isPresentInPool) {
-      // If it's not in the pool, check if we should show the overlay
-      setRideOffered((currentVisibleRide) => {
-        if (currentVisibleRide?.rideId !== ride.rideId) {
-          return ride;
-        }
-        return currentVisibleRide;
-      });
-    }
-    
-    // Return the pool (unchanged here, or you can add logic to add it to pool)
-    return prevPool;
-  });
-}, []); // Dependency array is now empty and stable
+  const handleRideOffered = useCallback((ride) => {
+    if (!ride?.rideId) return;
+    setRideOffered((current) =>
+      current?.rideId === ride.rideId ? current : ride,
+    );
+  }, []);
 
   const handleWebSocketResponseMessage = useCallback((event) => {
     try {
@@ -94,7 +81,7 @@ const handleRideOffered = useCallback((ride) => {
           handleRideOffered(payload);
           break;
         case DRIVER_WEBSOCKET_ACTIONS.ENABLE_DRIVER_ARRIVED_BUTTON:
-          setShowDriverArrived(true);
+          setDriverActionEnabled(true);
           break;
         case DRIVER_WEBSOCKET_ACTIONS.RIDE_ACCEPTED:
           fetchActiveRideDetails();
@@ -111,7 +98,7 @@ const handleRideOffered = useCallback((ride) => {
     } catch (error) {
       console.error("[WS] Failed to parse message:", error);
     }
-  }, [handleStateChange]); // Ensure all external functions used inside are in dependencies  
+  }, [handleRideOffered, handleStateChange]);
 
   const onMessageReceived = useCallback((event) => {
     handleWebSocketResponseMessage(event);
@@ -123,14 +110,17 @@ const handleRideOffered = useCallback((ride) => {
   // --- Optimized Location Logic (The Google "Battery-Friendly" Way) ---
   const sendLocation = useCallback((coords) => {
     const now = Date.now();
-    const dist = Math.hypot(coords.lat - lastSentPos.current.lat, coords.lng - lastSentPos.current.lng);
+    const previousPosition = lastSentPos.current;
+    const distanceMeters = previousPosition
+      ? haversineDistanceKm(previousPosition.lat, previousPosition.lng, coords.lat, coords.lng) * 1000
+      : Infinity;
 
-    // Only send if moved > 20 meters OR 30 seconds passed
-    const SIGNIFICANT_DISTANCE = 0.0002;
+    // Send the first fix, then send after 20 meters of movement or 30 seconds.
+    const SIGNIFICANT_DISTANCE_METERS = 20;
     const SIGNIFICANT_TIME = 30000;
 
-    if (dist > SIGNIFICANT_DISTANCE || (now - lastSentPos.current.timestamp) > SIGNIFICANT_TIME) {
-      const payload = { id, ...coords, state: actorState };
+    if (!previousPosition || distanceMeters > SIGNIFICANT_DISTANCE_METERS || (now - previousPosition.timestamp) > SIGNIFICANT_TIME) {
+      const payload = { id, ...coords, state: actorState, name: user?.name, mobileNo: user?.mobileNo };
       if (readyState === 1) {
         // console.log("Sending location via WebSocket: ", payload);
         handleWebSocketRequestMessage(DRIVER_WEBSOCKET_ACTIONS.DRIVER_LOCATION_PUSH, payload);
@@ -139,7 +129,7 @@ const handleRideOffered = useCallback((ride) => {
       }
       lastSentPos.current = { ...coords, timestamp: now };
     }
-  }, [id, actorState, readyState, handleWebSocketRequestMessage]);
+  }, [id, actorState, user?.name, user?.mobileNo, readyState, handleWebSocketRequestMessage]);
 
   const startLocationWatch = useCallback(() => {
     if (locationWatchId.current) return; // Already watching
@@ -168,34 +158,39 @@ const handleRideOffered = useCallback((ride) => {
 
   // --- Component Lifecycle ---
   useEffect(() => {
-    if (isOnline && readyState === 1) {
+    if (isOnline) {
       startLocationWatch();
     }
     else stopLocationWatch();
     return () => stopLocationWatch();
-  }, [readyState, startLocationWatch, stopLocationWatch]);
+  }, [isOnline, startLocationWatch, stopLocationWatch]);
 
   const acceptIncomingRide = async (ride) => {
-    if (!ride) return;
+    if (!ride || acceptingRideId) return;
+    setAcceptingRideId(ride.rideId);
     try {
       const response = await BackendService(ApiEndpoints.acceptRide, {
         rideId: ride.rideId, driverId: id, userId: ride.userId
       });
       if (response.data) {
-        console.log("Ride accepted successfully: ", response.data); S
+        console.log("Ride accepted successfully: ", response.data);
         setRideOffered(null);
         setActiveRide(ride);
         setIncomingRides(prev => prev.filter(rd => rd.rideId !== ride.rideId));
+        setDriverActionEnabled(false);
         handleStateChange(DRIVER_STATES.ACCEPTED);
       }
     } catch (err) {
       setError("Ride no longer available.");
+    } finally {
+      setAcceptingRideId(null);
     }
   };
 
   const declineIncomingRide = (ride) => {
     console.log("Declining ride offer: ", ride.rideId);
     setRideOffered(null);
+    setIncomingRides((rides) => rides.filter((item) => item.rideId !== ride.rideId));
     handleWebSocketRequestMessage(DRIVER_WEBSOCKET_ACTIONS.DRIVER_DECLINED_OFFER, { rideId: ride.rideId, driverId: id });
   }
 
@@ -206,32 +201,36 @@ const handleRideOffered = useCallback((ride) => {
       if (response.data) {
         setActiveRide(null);
         setRideOffered(null);
+          setDriverActionEnabled(false);
         handleStateChange(DRIVER_STATES.IDLE);
-        goOnline();
+        setIsOnline(true);
+        startConnection();
         console.log("Ride cancelled successfully: ", response.data);
       }
     } catch (error) {
       console.error("Failed to cancel ride: ", error);
 
     }
-  }, [activeRide, id, handleWebSocketRequestMessage, handleStateChange]);
+  }, [activeRide, id, handleStateChange, startConnection]);
 
-  const goOnline = () => {
+  const goOnline = useCallback(() => {
     setIsOnline(true);
     startConnection();
-  };
-  const goOffline = () => {
+  }, [startConnection]);
+
+  const goOffline = useCallback(() => {
     setIsOnline(false);
     console.log("Going offline. Clearing ride offers and stopping WebSocket connection.");
     setRideOffered(null);
+    setIncomingRides([]);
     stopConnection();
-  };
+  }, [stopConnection]);
 
   useEffect(() => {
     if (isDriverBusy()) {
       goOnline();
     }
-  }, [actorState])
+  }, [actorState, goOnline, isDriverBusy]);
 
 
 
@@ -250,13 +249,23 @@ const handleRideOffered = useCallback((ride) => {
 
     const response = {
       lat: parseFloat(isHeadingToPickup ? activeRide.startLat : activeRide.endLat),
-      destinationLabel: isHeadingToPickup ? activeRide.startAddress : activeRide.endAddress,
+      label: isHeadingToPickup ? activeRide.startAddress : activeRide.endAddress,
       lng: parseFloat(isHeadingToPickup ? activeRide.startLng : activeRide.endLng)
     };
-    const dist = haversineDistanceKm(currentPosition?.lat, currentPosition?.lng, response?.lat, response?.lng) * 1000;
-    // setShowDriverActionButton((dist && dist < 200) || false);
-    return response;
+    const distanceMeters = currentPosition
+      ? haversineDistanceKm(
+          currentPosition.lat,
+          currentPosition.lng,
+          response.lat,
+          response.lng,
+        ) * 1000
+      : null;
+    return { ...response, distanceMeters };
   }, [actorState, activeRide, currentPosition]);
+
+  const showDriverActionButton =
+    driverActionEnabled ||
+    (destination?.distanceMeters != null && destination.distanceMeters <= 200);
 
   // Optimization: Wrap callbacks passed to children to prevent their re-render
   const onTripStartedHandler = useCallback(() => {
@@ -264,13 +273,17 @@ const handleRideOffered = useCallback((ride) => {
       rideId: activeRide?.rideId,
       driverId: activeRide?.driverId
     });
+    setDriverActionEnabled(false);
     handleStateChange(DRIVER_STATES.ON_TRIP);
     setOpenPinModal(false);
-  }, [handleWebSocketRequestMessage, activeRide]);
+  }, [handleWebSocketRequestMessage, handleStateChange, activeRide]);
 
   const onTripCompletedHandler = useCallback(() => {
-    console.log("Trip completed callback triggered");
-  }, []);
+    setOpenRideCompleteModal(false);
+    setActiveRide(null);
+    setDriverActionEnabled(false);
+    handleStateChange(DRIVER_STATES.IDLE);
+  }, [handleStateChange]);
 
   const fetchActiveRideDetails = useCallback(async () => {
     try {
@@ -283,7 +296,7 @@ const handleRideOffered = useCallback((ride) => {
       console.error("Failed to fetch active ride details:", err);
       setError("Failed to fetch active ride details.");
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (activeRide == null && isDriverBusy()) {
@@ -306,9 +319,16 @@ const handleRideOffered = useCallback((ride) => {
 
       {!isOnline ? (
         <div className="offline-hero">
-          <div className="card">
-            <h2>Go online to accept the ride...</h2>
-            <p className="text-muted">You will see new requests here once you are active.</p>
+          <div className="offline-panel">
+            <span className="offline-status-mark" aria-hidden="true" />
+            <div className="offline-copy">
+              <span className="offline-eyebrow">DRIVER STATUS</span>
+              <h2>You’re offline</h2>
+              <p>Go online when you’re ready to receive ride requests.</p>
+              <button className="driver-primary-action" onClick={goOnline}>
+                Go online
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -319,24 +339,21 @@ const handleRideOffered = useCallback((ride) => {
             
             {/* The Floating Ride Offer Overlay */}
             {rideOffered && (
-              <div className="offer-overlay floating-overlay">
-                <RideRequestOverlay
-                  ride={rideOffered}
-                  setRideOffered={setRideOffered}
-                  onAccept={acceptIncomingRide}
-                  onDecline={declineIncomingRide}
-                  activeRide={activeRide}
-                  setIncomingRides={setIncomingRides}
-                />
-              </div>
+              <RideRequestOverlay
+                ride={rideOffered}
+                setRideOffered={setRideOffered}
+                onAccept={acceptIncomingRide}
+                onDecline={declineIncomingRide}
+                setIncomingRides={setIncomingRides}
+                isAccepting={acceptingRideId === rideOffered.rideId}
+              />
             )}
           </section>
 
           {/* SECTION 2: ACTIVE RIDE (Pushes content down) */}
           {activeRide && (
             <section className="active-ride-area">
-              <div className="card">
-                <ActiveRide
+              <ActiveRide
                   activeRide={activeRide}
                   actorState={actorState}
                   handleWebSocketRequestMessage={handleWebSocketRequestMessage}
@@ -345,14 +362,18 @@ const handleRideOffered = useCallback((ride) => {
                   showDriverActionButton={showDriverActionButton}
                   handleCancelRide={handleCancelRide}
                 />
-              </div>
             </section>
           )}
 
           {/* SECTION 3: INCOMING POOL (Grows the page height) */}
           {incomingRides.length > 0 && (
             <section className="incoming-rides-area">
-              <IncomingRides incomingRides={incomingRides} />
+              <IncomingRides
+                incomingRides={incomingRides}
+                onAccept={acceptIncomingRide}
+                onDecline={declineIncomingRide}
+                acceptingRideId={acceptingRideId}
+              />
             </section>
           )}
         </div>
@@ -360,7 +381,13 @@ const handleRideOffered = useCallback((ride) => {
 
       {/* Modals & Toasts */}
       <DriverTripStartModal isOpen={openPinModal} rideId={activeRide?.rideId} onTripStarted={onTripStartedHandler} onClose={onClosePinModal} />
-      <DriverTripCompleteModal isOpen={openRideCompleteModal} ride={activeRide} onTripCompleted={onTripCompletedHandler} onClose={onCloseRideCompleteModal} />
+      <DriverTripCompleteModal
+        isOpen={openRideCompleteModal}
+        ride={activeRide}
+        totalFare={activeRide?.fare ?? activeRide?.estimatedFare ?? "0.00"}
+        onTripCompleted={onTripCompletedHandler}
+        onClose={onCloseRideCompleteModal}
+      />
       {error && <div className="toast-error notification"><strong>Error</strong>{error}</div>}
     </div>
   );

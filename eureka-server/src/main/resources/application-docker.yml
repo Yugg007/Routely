@@ -1,0 +1,38 @@
+server:
+  port: 8761
+  ssl:
+    enabled: true
+    key-store: file:/app/certs/keystore.p12
+    key-store-password: routely123
+    key-store-type: PKCS12
+    key-alias: eureka-server
+    key-password: routely123
+    trust-store: file:/app/certs/truststore.p12
+    trust-store-password: routely123
+    trust-store-type: PKCS12		
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+    secure-port-enabled: true
+    secure-port: 8761
+    non-secure-port-enabled: false
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+
+  client:
+    register-with-eureka: false   # server itself doesn’t register
+    fetch-registry: false
+    service-url:
+      defaultZone: https://eureka-server:8761/eureka/
+  server:
+    # update read only for client to check the running instance
+    response-cache-update-interval-ms: 2000
+    # eureka have two instance list(master and public) -> false tell use to read from master instance list
+    use-read-only-response-cache: false
+    # to check expired instance to evict
+    eviction-interval-timer-in-ms: 50000

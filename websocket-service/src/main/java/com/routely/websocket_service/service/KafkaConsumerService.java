@@ -55,8 +55,9 @@ public class KafkaConsumerService {
 			} 
 			else if (EVENT_RIDE_ACCEPTED.equals(key)) {
 				RideRequest rideRequest = preprocessing(value);
-				driverSocketHandler.handleRideAccepted(rideRequest);
-				userSocketHandler.sendAcceptedRideToUser(rideRequest);
+				if (driverSocketHandler.handleRideAccepted(rideRequest)) {
+					userSocketHandler.sendAcceptedRideToUser(rideRequest);
+				}
 
 			}
 			else if(EVENT_RIDE_CANCELLED.equals(key)) {

@@ -1,0 +1,198 @@
+# ─────────────────────────────────────────────
+#  Routely — full-stack docker-compose
+#  Usage: docker-compose up --build
+# ─────────────────────────────────────────────
+
+services:
+
+  # ── Infrastructure ────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    container_name: routely-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-routely}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: routely-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kafka:
+      image: confluentinc/cp-kafka:7.6.0
+      container_name: routely-kafka
+      ports:
+        - "9092:9092"
+      environment:
+        # 1. Tell Kafka to use KRaft (No Zookeeper)
+        KAFKA_NODE_ID: 1
+        KAFKA_PROCESS_ROLES: 'broker,controller'
+        KAFKA_CONTROLLER_QUORUM_VOTERS: '1@routely-kafka:29093'
+        
+        # 2. Listeners
+        KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+        KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://routely-kafka:29092,PLAINTEXT_HOST://localhost:9092'
+        KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+        KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+        
+        # 3. Cluster ID (Required for KRaft)
+        KAFKA_CONTROLLER_LOG_DIRS: '/var/lib/kafka/data'
+        CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk' # You can use any random string here
+        
+        # 4. Misc
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      healthcheck:
+        test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+        interval: 10s
+        timeout: 10s
+        retries: 5
+
+  # ── Spring Boot Services ──────────────────
+  # Build order: RoutelyCommon must be built first (./mvnw clean install in CI)
+  # At runtime, Eureka must be healthy before any other service registers.
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
+    container_name: routely-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: routely-user-service
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-routely}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      EUREKA_HOST: eureka-server
+      JWT_SECRET: ${JWT_SECRET:-changeme-use-a-real-secret-in-prod}
+      AES_KEY: ${AES_KEY:-changeme-16chars}
+
+  trip-service:
+    build:
+      context: .
+      dockerfile: trip-service/Dockerfile
+    container_name: routely-trip-service
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8005:8005"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-routely}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      EUREKA_HOST: eureka-server
+
+  websocket-service:
+    build:
+      context: .
+      dockerfile: websocket-service/Dockerfile
+    container_name: routely-websocket-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      EUREKA_HOST: eureka-server
+      JWT_SECRET: ${JWT_SECRET:-changeme-use-a-real-secret-in-prod}
+      AES_KEY: ${AES_KEY:-changeme-16chars}
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: routely-api-gateway
+    restart: unless-stopped
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_HOST: eureka-server
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: routely-frontend
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    ports:
+      - "8001:80"
+    environment:
+      VITE_API_BASE_URL: https://localhost:8002
+
+volumes:
+  mysql-data:

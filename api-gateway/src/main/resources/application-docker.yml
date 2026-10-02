@@ -1,0 +1,80 @@
+server:
+  port: 8002
+  ssl:
+    enabled: true
+    key-store: file:/app/certs/keystore.p12
+    key-store-password: routely123
+    key-store-type: PKCS12
+    key-alias: api-gateway
+    key-password: routely123
+    trust-store: file:/app/certs/truststore.p12
+    trust-store-password: routely123
+    trust-store-type: PKCS12
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:3000"
+                  - "http://localhost:8001"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                exposedHeaders:
+                  - Authorization
+                  - Content-Type
+                  - Set-Cookie
+                allowCredentials: true
+                maxAge: 3600
+          routes:
+            - id: user-service
+              uri: lb://USER-SERVICE
+              predicates:
+                - Path=/users/**
+            - id: trip-service
+              uri: lb://TRIP-SERVICE
+              predicates:
+                - Path=/trips/**
+            - id: websocket-service
+              uri: lb://WEBSOCKET-SERVICE
+              predicates:
+                - Path=/ws/**
+              metadata:
+                response-timeout: 0
+          httpclient:
+            ssl:
+              use-insecure-trust-manager: true   # For self-signed certs in dev; remove in prod!
+            use-forward-headers: true
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+
+eureka:
+  instance:
+    hostname: eureka-server
+    secure-port-enabled: true
+    secure-port: 8002
+    non-secure-port-enabled: false
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    metadata-map:
+      secure: "true"
+  client:
+    register-with-eureka: false
+    fetch-registry: true
+    service-url:
+      defaultZone: https://eureka-server:8761/eureka/

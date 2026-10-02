@@ -11,7 +11,6 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
-import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Component;
@@ -33,6 +32,8 @@ public class RedisHandler {
     private static final String DATA = Constants.REDIS_RIDE_DATA;
     private static final String STATUS = Constants.REDIS_RIDE_STATUS;
     private static final String REDIS_RIDE_STATUS_WAITING_FOR_DRIVER = Constants.REDIS_RIDE_STATUS_WAITING_FOR_DRIVER;
+    private static final String RIDE_ACCEPT_CLAIM_PREFIX = "ride_accept_claim:";
+    private static final String DRIVER_RIDE_OFFER_PREFIX = "driver_ride_offer:";
 
     
     // --- GEOSPATIAL OPERATIONS ---
@@ -90,12 +91,12 @@ public class RedisHandler {
     }
 
     public void removeRideFromQueue(Long rideId) {
-        // O(N) where N is number of elements, but very fast for small queues
-        redisTemplate.opsForHash().delete(REDIS_PENDING_RIDE_KEYS, rideId);
+        redisTemplate.opsForSet().remove(REDIS_PENDING_RIDE_KEYS, rideId);
     }
 
     public void deleteRideData(Long rideId) {
         redisTemplate.delete(REDIS_RIDE_DATA_PREFIX + rideId);
+        redisTemplate.delete(RIDE_ACCEPT_CLAIM_PREFIX + rideId);
     }
     
     
@@ -124,6 +125,53 @@ public class RedisHandler {
         
         Long size = redisTemplate.opsForSet().size(key);
         return size != null ? size : 0L;
+    }
+
+    public Long sizeOfRedisList(String key) {
+        if (key == null || key.isEmpty()) {
+            return 0L;
+        }
+
+        Long size = redisTemplate.opsForList().size(key);
+        return size != null ? size : 0L;
+    }
+
+    public boolean claimRideAcceptance(Long rideId, Long driverId) {
+        String rideStatus = getRideStatus(rideId);
+        if (!REDIS_RIDE_STATUS_WAITING_FOR_DRIVER.equals(rideStatus)
+                && !Constants.REDIS_RIDE_STATUS_ACCEPTED.equals(rideStatus)) {
+            return false;
+        }
+
+        String claimKey = RIDE_ACCEPT_CLAIM_PREFIX + rideId;
+        String driverValue = String.valueOf(driverId);
+        Boolean claimed = redisTemplate.opsForValue().setIfAbsent(claimKey, driverValue, 24, TimeUnit.HOURS);
+        if (Boolean.TRUE.equals(claimed)) {
+            updateRideStatus(rideId, Constants.REDIS_RIDE_STATUS_ACCEPTED);
+            return true;
+        }
+
+        Object existingClaim = redisTemplate.opsForValue().get(claimKey);
+        if (driverValue.equals(existingClaim)) {
+            if (REDIS_RIDE_STATUS_WAITING_FOR_DRIVER.equals(rideStatus)) {
+                updateRideStatus(rideId, Constants.REDIS_RIDE_STATUS_ACCEPTED);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void releaseRideAcceptance(Long rideId) {
+        redisTemplate.delete(RIDE_ACCEPT_CLAIM_PREFIX + rideId);
+    }
+
+    public boolean tryOfferRideToDriver(Long driverId, Long rideId) {
+        String offerKey = DRIVER_RIDE_OFFER_PREFIX + driverId + ":" + rideId;
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(offerKey, "1", 15, TimeUnit.SECONDS));
+    }
+
+    public void clearRideOfferForDriver(Long driverId, Long rideId) {
+        redisTemplate.delete(DRIVER_RIDE_OFFER_PREFIX + driverId + ":" + rideId);
     }
 
     public void putInList(String key, String value) {

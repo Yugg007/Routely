@@ -2,7 +2,7 @@ package com.routely.shared.dto;
 
 import com.routely.shared.enums.ActorType;
 
-public class RideCancelledEvent {
+public class RideEvent {
 	private Long userId;
 	private Long rideId;
 	private Long driverId;
@@ -40,12 +40,12 @@ public class RideCancelledEvent {
 		this.cancelledBy = cancelledBy;
 	}
 
-	public RideCancelledEvent() {
+	public RideEvent() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 
-	public RideCancelledEvent(Long userId, Long rideId, Long driverId, ActorType cancelledBy) {
+	public RideEvent(Long userId, Long rideId, Long driverId, ActorType cancelledBy) {
 		super();
 		this.userId = userId;
 		this.rideId = rideId;

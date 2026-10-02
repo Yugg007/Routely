@@ -44,7 +44,7 @@ public class TripController {
 	public ResponseEntity<Ride> userRideDetails(@RequestBody TripRequest request) {
 		Ride ride = null;
 		try {
-			ride = tripService.getUserCurrentRide(request.getUserId()).get();
+			ride = tripService.getUserCurrentRide(request.getUserId());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("Error occured while fetching ride details", e.getLocalizedMessage());
@@ -53,9 +53,22 @@ public class TripController {
 	}
 	
 	@PostMapping("/user/cancelRide")
-	public ResponseEntity<String> cancelRide(@RequestBody TripRequest request) {
+	public ResponseEntity<String> cancelRidedBuUser(@RequestBody TripRequest request) {
 		try {
 			tripService.cancelRide(request, ActorType.USER);
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.info("Error occured while cancelling ride", e.getLocalizedMessage());
+			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
+					.body("Error occured while cancelling ride" + e.getLocalizedMessage());
+		}
+		return ResponseEntity.ok("Ride cancelled.");
+	}
+	
+	@PostMapping("/driver/cancelRide")
+	public ResponseEntity<String> cancelRidedByDriver(@RequestBody TripRequest request) {
+		try {
+			tripService.cancelRide(request, ActorType.DRIVER);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("Error occured while cancelling ride", e.getLocalizedMessage());
@@ -102,11 +115,26 @@ public class TripController {
 
 	}
 	
+	@PostMapping("/driver/completeRide")
+	public ResponseEntity<String> completeRide(@RequestBody TripRequest request) throws Exception {
+		String response = "";
+		try {
+			response  = tripService.completeRide(request);
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.info("Error occured while requesting ride", e.getLocalizedMessage());
+			response = "Error occured";
+			return ResponseEntity.status(400).body(response);
+		}
+		return ResponseEntity.ok(response);
+
+	}
+	
 	@PostMapping("/driver/rideDetails")
 	public ResponseEntity<Ride> driverRideDetails(@RequestBody TripRequest request) {
 		Ride ride = null;
 		try {
-			ride = tripService.getDriverCurrentRide(request.getDriverId()).get();
+			ride = tripService.getDriverCurrentRide(request.getDriverId());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("Error occured while fetching ride details", e.getLocalizedMessage());

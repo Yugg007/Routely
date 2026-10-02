@@ -11,13 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.routely.user_service.controller.utils.AesUtil;
+import com.routely.shared.utils.AesUtil;
 import com.routely.user_service.controller.utils.CookieUtil;
-import com.routely.user_service.controller.utils.JwtUtil;
+import com.routely.user_service.controller.utils.JwtUtilHelper;
 import com.routely.user_service.dto.AuthRequest;
 import com.routely.user_service.dto.AuthResponse;
 import com.routely.user_service.dto.VehicleDto;
@@ -35,10 +36,15 @@ public class UserControler {
 	@Autowired
     private UserService userService;
 	@Autowired
-	private JwtUtil jwtUtil;
+	private JwtUtilHelper jwtUtilHelper;
 	@Autowired
 	private CookieUtil cookieUtil;
 
+	
+	@GetMapping("/test")
+	public String test() {
+		return "Successfully test the endpoint.";
+	}
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) throws Exception {
@@ -46,7 +52,7 @@ public class UserControler {
     	AuthResponse authResponse = new AuthResponse();
     	try {
     		authResponse = userService.register(request);
-    		String token = jwtUtil.generateToken(authResponse);
+    		String token = jwtUtilHelper.generateToken(authResponse);
     		String encryptedToken = AesUtil.encrypt(token);
     		authResponse.setJwtToken(encryptedToken);
     		headers.add(HttpHeaders.SET_COOKIE, cookieUtil.createCookie("RoutelyToken", encryptedToken).toString());
@@ -67,7 +73,7 @@ public class UserControler {
     	AuthResponse authResponse = new AuthResponse();
     	try {
     		authResponse = userService.login(request);
-    		String token = jwtUtil.generateToken(authResponse);
+    		String token = jwtUtilHelper.generateToken(authResponse);
     		String encryptedToken = AesUtil.encrypt(token);
     		authResponse.setJwtToken(encryptedToken);
     		headers.add(HttpHeaders.SET_COOKIE, cookieUtil.createCookie("RoutelyToken", encryptedToken).toString());
@@ -88,7 +94,8 @@ public class UserControler {
     		String token = cookieUtil.extractTokenFromCookies(req);			
 	    	if(token != null) {
 	    		String decryptedToken = AesUtil.decrypt(token);
-	    		authResponse = jwtUtil.extractClaims(decryptedToken);
+	    		authResponse = jwtUtilHelper.extractClaims(decryptedToken);
+	    		authResponse.setAuthStatus(true);
 	    		authResponse.setActorState(actorSessionService.getActorState(authResponse.getId()));
 	    		return ResponseEntity.ok(authResponse);
 	    	}
@@ -114,7 +121,7 @@ public class UserControler {
     	List<VehicleDto> pojos = new ArrayList<>();
     	try {
     		String token = cookieUtil.extractTokenFromCookies(req);
-    		request.setEmail(jwtUtil.extractUsername(AesUtil.decrypt(token)));
+    		request.setEmail(jwtUtilHelper.extractUsername(AesUtil.decrypt(token)));
     		pojos = userService.addVehicle(request);
     		return ResponseEntity.ok(pojos);
 			
@@ -129,7 +136,7 @@ public class UserControler {
     	List<VehicleDto> pojos = new ArrayList<>();
     	try {
     		String token = cookieUtil.extractTokenFromCookies(req);
-    		request.setEmail(jwtUtil.extractUsername(AesUtil.decrypt(token)));
+    		request.setEmail(jwtUtilHelper.extractUsername(AesUtil.decrypt(token)));
     		pojos = userService.updateVehicle(request);
     		return ResponseEntity.ok(pojos);
 			
@@ -144,7 +151,7 @@ public class UserControler {
     	List<VehicleDto> pojos = new ArrayList<>();
     	try {
     		String token = cookieUtil.extractTokenFromCookies(req);
-    		request.setEmail(jwtUtil.extractUsername(AesUtil.decrypt(token)));
+    		request.setEmail(jwtUtilHelper.extractUsername(AesUtil.decrypt(token)));
     		pojos = userService.deleteVehicle(request);
     		return ResponseEntity.ok(pojos);
 			
@@ -159,7 +166,7 @@ public class UserControler {
     	List<VehicleDto> pojos = new ArrayList<>();
     	try {
     		String token = cookieUtil.extractTokenFromCookies(req);
-    		String email = jwtUtil.extractUsername(AesUtil.decrypt(token));
+    		String email = jwtUtilHelper.extractUsername(AesUtil.decrypt(token));
     		pojos = userService.fetchVehicles(email);
     		return ResponseEntity.ok(pojos);
 			

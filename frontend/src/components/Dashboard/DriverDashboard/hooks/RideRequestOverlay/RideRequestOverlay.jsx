@@ -1,23 +1,32 @@
 import React from 'react'
 import "./RideRequestOverlay.css";
 
-const RideRequestOverlay = ({ ride, setRideOffered, onAccept, onDecline, activeRide, setIncomingRides }) => {
+const RideRequestOverlay = ({
+  ride,
+  setRideOffered,
+  onAccept,
+  onDecline,
+  setIncomingRides,
+  isAccepting = false,
+}) => {
 
   const handleCrossButtonClick = () => {
-    setIncomingRides(prevRides => {
+    setIncomingRides((prevRides) => {
       const isDuplicate = prevRides.some(r => r.rideId === ride.rideId);
-      if (isDuplicate) {
-        return prevRides; 
-      }
-      setRideOffered(null); // Close the overlay
-      return [...prevRides, ride];
+      return isDuplicate ? prevRides : [...prevRides, ride];
     });
+    setRideOffered(null);
   };
 
   return (
     <div className="ride-request-card floating-overlay">
       {/* 1. Added the Cross Button here */}
-      <button className="close-btn" onClick={handleCrossButtonClick}>
+      <button
+        className="close-btn"
+        onClick={handleCrossButtonClick}
+        aria-label="Move request to queue"
+        title="Move to queue"
+      >
         &times;
       </button>
 
@@ -31,8 +40,20 @@ const RideRequestOverlay = ({ ride, setRideOffered, onAccept, onDecline, activeR
         <div className="price-tag">₹{ride?.fare || "---"}</div>
       </div>
       <div className="card-footer">
-        <button className="btn-decline" onClick={() => onDecline(ride)}>Decline</button>
-        <button className="btn-accept" onClick={() => onAccept(ride)}>Accept Ride</button>
+        <button
+          className="btn-decline"
+          onClick={() => onDecline(ride)}
+          disabled={isAccepting}
+        >
+          Decline
+        </button>
+        <button
+          className="btn-accept"
+          onClick={() => onAccept(ride)}
+          disabled={isAccepting}
+        >
+          {isAccepting ? "Accepting..." : "Accept ride"}
+        </button>
       </div>
     </div>
   )

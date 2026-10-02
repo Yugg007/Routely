@@ -24,8 +24,10 @@ public class ApiGatewayApplication {
 		            .filters(f -> f
 		                .stripPrefix(1)
 		                .modifyRequestBody(String.class, String.class, (exchange, body) -> {
-		                    // Logic to extract RideRequest from 'body'
 		                    System.out.println("Payload in Gateway: " + body);
+		                    if (body == null) {
+		                        return Mono.empty();
+		                    }
 		                    return Mono.just(body); 
 		                })
 		            )

@@ -1,6 +1,7 @@
 package com.routely.websocket_service.handler;
 
 import java.util.Set;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,6 @@ public class DriverHandler {
     private final String REDIS_DRIVER_LOCATION_PREFIX = Constants.REDIS_DRIVER_LOCATION_PREFIX;
     private final String STATE_CHANGE = Constants.STATE_CHANGE;
     private final String REDIS_RIDE_STATUS_WAITING_FOR_DRIVER = Constants.REDIS_RIDE_STATUS_WAITING_FOR_DRIVER;
-    private final String REDIS_RIDE_STATUS_ACCEPTED = Constants.REDIS_RIDE_STATUS_ACCEPTED;
     private final String REDIS_RIDE_STATUS_DRIVER_ARRIVED = Constants.REDIS_RIDE_STATUS_DRIVER_ARRIVED;
     private final String REDIS_DRIVER_RIDE_POOL_PREFIX = Constants.REDIS_DRIVER_RIDE_POOL_PREFIX;
     private final String REDIS_DRIVER_DECLINED_RIDES_PREFIX = Constants.REDIS_DRIVER_DECLINED_RIDES_PREFIX;
@@ -72,7 +72,20 @@ public class DriverHandler {
     			}
     		}
     	}
-    }
+	    }
+
+		public List<Long> findNearbyDriverIds(String lat, String lng, double radiusKm) {
+			if (lat == null || lat.isBlank() || lng == null || lng.isBlank()) {
+				return List.of();
+			}
+
+			try {
+				return redisHandler.findNearbyDriverIds(
+						Double.parseDouble(lat), Double.parseDouble(lng), radiusKm);
+			} catch (NumberFormatException exception) {
+				return List.of();
+			}
+		}
 
 	public void removeDriverDetailFromCache(Long driverId) {
         redisHandler.removeDriverData(driverId);
@@ -121,19 +134,22 @@ public class DriverHandler {
 		messageHandler.sendMessage(session, "ACKNOWLEDGE", msg);		
 	}
 
-	public void handleRideAccepted(RideRequest rideRequest, WebSocketSession session) {
-		// TODO Auto-generated method stub
-		redisHandler.updateRideStatus(rideRequest.getRideId(), REDIS_RIDE_STATUS_ACCEPTED);
+	public boolean handleRideAccepted(RideRequest rideRequest, WebSocketSession session) {
+		if (!redisHandler.claimRideAcceptance(rideRequest.getRideId(), rideRequest.getDriverId())) {
+			return false;
+		}
+		redisHandler.clearRideOfferForDriver(rideRequest.getDriverId(), rideRequest.getRideId());
 		
 		String driverAcceptedRidesKey = REDIS_DRIVER_ACCEPTED_RIDES_PREFIX + rideRequest.getDriverId();
 		redisHandler.addToRedisSet(driverAcceptedRidesKey, String.valueOf(rideRequest.getRideId()));
 		
 		messageHandler.sendMessage(session, RIDE_ACCEPTED, rideRequest);
+		return true;
 	}
 	
 	public boolean attemptRideOffer(Long driverId, WebSocketSession session, RideRequest rideRequest) {
 		// TODO Auto-generated method stub
-		if(isDriverDistanceInRange(driverId, rideRequest)) {
+		if(rideRequest != null && isDriverDistanceInRange(driverId, rideRequest)) {
 			String ride_id = String.valueOf(rideRequest.getRideId());		
 			
 			String driverDeclinedRides = REDIS_DRIVER_DECLINED_RIDES_PREFIX + driverId;
@@ -152,7 +168,7 @@ public class DriverHandler {
 				boolean isInList = redisHandler.isInList(driverRidePoolKey, ride_id);
 				
 				if(!isInList) {
-					Long driverRidePoolSize = redisHandler.sizeOfRedisSet(driverRidePoolKey);
+					Long driverRidePoolSize = redisHandler.sizeOfRedisList(driverRidePoolKey);
 					if(driverRidePoolSize < 2) {
 						redisHandler.putInList(driverRidePoolKey, ride_id);
 					}				
@@ -161,7 +177,7 @@ public class DriverHandler {
 				if(rideAcceptedPoolSize < 2) {
 					int result = redisHandler.getFromList(driverRidePoolKey).indexOf(ride_id);
 					boolean shouldOffer = (rideAcceptedPoolSize == result);
-					if(shouldOffer) {
+					if(shouldOffer && redisHandler.tryOfferRideToDriver(driverId, rideRequest.getRideId())) {
 						messageHandler.sendMessage(session, RIDE_OFFERED, rideRequest);
 						return true;
 					}
@@ -181,6 +197,7 @@ public class DriverHandler {
 		//Put into ride_id driver decline set
 		String driverDeclinedRides = REDIS_DRIVER_DECLINED_RIDES_PREFIX + rideEvent.getDriverId();
     	redisHandler.addToRedisSet(driverDeclinedRides, String.valueOf(rideEvent.getRideId()));
+		redisHandler.clearRideOfferForDriver(rideEvent.getDriverId(), rideEvent.getRideId());
     	
     	//get current location of driver
     	String driverLocationKey = REDIS_DRIVER_LOCATION_PREFIX + rideEvent.getDriverId();
@@ -199,6 +216,7 @@ public class DriverHandler {
 		//Put into ride_id driver decline set
 		String driverCancelledRides = REDIS_DRIVER_CANCELLED_RIDES_PREFIX + rideEvent.getDriverId();
     	redisHandler.addToRedisSet(driverCancelledRides, String.valueOf(rideEvent.getRideId()));
+		redisHandler.clearRideOfferForDriver(rideEvent.getDriverId(), rideEvent.getRideId());
     	
     	//get current location of driver
     	String driverLocationKey = REDIS_DRIVER_LOCATION_PREFIX + rideEvent.getDriverId();
@@ -206,6 +224,13 @@ public class DriverHandler {
     	
     	//update ride status to waiting for driver
     	redisHandler.updateRideStatus(rideEvent.getRideId(), REDIS_RIDE_STATUS_WAITING_FOR_DRIVER);
+		redisHandler.releaseRideAcceptance(rideEvent.getRideId());
+		redisHandler.removeFromRedisSet(
+				REDIS_DRIVER_ACCEPTED_RIDES_PREFIX + rideEvent.getDriverId(),
+				String.valueOf(rideEvent.getRideId()));
+		redisHandler.deleteFromList(
+				REDIS_DRIVER_RIDE_POOL_PREFIX + rideEvent.getDriverId(),
+				String.valueOf(rideEvent.getRideId()));
     	
 		//Offering new ride to driver
     	sendRideToDriver(session, rideEvent.getDriverId(), loc);
@@ -223,11 +248,12 @@ public class DriverHandler {
 		redisHandler.removeRideFromQueue(rideId);
 		
 		//remove ride data from redis
-		String deleteRideKey = "ride_data:" + rideId;
-		redisHandler.delete(deleteRideKey);
-		
 		//remove connection bw user and ride
 		String driverAcceptedRidesKey = REDIS_DRIVER_ACCEPTED_RIDES_PREFIX + driverId;
 		redisHandler.removeFromRedisSet(driverAcceptedRidesKey, String.valueOf(rideRequest.getRideId()));
+		redisHandler.deleteFromList(
+				REDIS_DRIVER_RIDE_POOL_PREFIX + driverId,
+				String.valueOf(rideRequest.getRideId()));
+		redisHandler.deleteRideData(rideId);
 	}
 };

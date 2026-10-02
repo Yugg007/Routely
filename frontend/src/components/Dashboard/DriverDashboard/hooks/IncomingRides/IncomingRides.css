@@ -175,3 +175,203 @@
   line-height: 1.4em;
   max-height: 2.8em; 
 }
+
+.incoming-rides-shell {
+  padding: 0;
+  background: transparent;
+  color: #17202c;
+  font-family: inherit;
+}
+
+.incoming-rides-shell .section-title {
+  margin: 0 0 14px;
+  color: #263443;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.incoming-rides-shell .incoming-rides-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+}
+
+.incoming-rides-shell .incoming-ride-card {
+  padding: 17px;
+  border: 1px solid #e0e7ea;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(22, 35, 49, 0.045);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.incoming-rides-shell .incoming-ride-card:hover {
+  transform: none;
+  border-color: #bdd6ca;
+  box-shadow: 0 8px 22px rgba(22, 35, 49, 0.08);
+}
+
+.incoming-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf1f2;
+}
+
+.incoming-card-header .user-info {
+  min-width: 0;
+}
+
+.incoming-rides-shell .passenger-name {
+  overflow: hidden;
+  margin: 0;
+  color: #182533;
+  font-size: 0.94rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.incoming-rides-shell .ride-type-badge {
+  display: inline-block;
+  margin: 7px 0 0;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #f1f5f4;
+  color: #52625e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.incoming-rides-shell .fare-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  gap: 2px;
+  color: #176b4d;
+}
+
+.incoming-rides-shell .fare-display span {
+  color: #77858e;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+.incoming-rides-shell .fare-display strong {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.incoming-rides-shell .card-body {
+  padding: 14px 0;
+}
+
+.incoming-rides-shell .location-track {
+  gap: 11px;
+  margin: 0;
+}
+
+.incoming-rides-shell .track-icons {
+  flex: 0 0 12px;
+  margin: 2px 0 0;
+  padding: 0;
+}
+
+.incoming-rides-shell .track-icons .dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+}
+
+.incoming-rides-shell .track-icons .dot.start { background: #168457; }
+.incoming-rides-shell .track-icons .dot.end { background: #d64c43; }
+
+.incoming-rides-shell .track-icons .line {
+  width: 1px;
+  height: 28px;
+  flex: 0 0 28px;
+  margin: 3px 0;
+  background: #cbd5d8;
+}
+
+.incoming-rides-shell .track-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.incoming-rides-shell .location-point label {
+  color: #75838b;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.incoming-rides-shell .location-point p.address-text {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  max-height: 2.65em;
+  margin: 3px 0 10px;
+  color: #334155;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.incoming-rides-shell .incoming-contact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid #e2e9e7;
+  border-radius: 6px;
+  color: #23694f;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.incoming-rides-shell .incoming-contact:hover {
+  background: #f3f8f5;
+}
+
+.incoming-rides-shell .card-actions {
+  grid-template-columns: minmax(80px, 0.7fr) minmax(130px, 1.3fr);
+  gap: 8px;
+}
+
+.incoming-rides-shell .card-actions button {
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  transition: background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+.incoming-rides-shell .card-actions .btn-decline {
+  border-color: #e2e7ea;
+  background: #fff;
+  color: #66727d;
+}
+
+.incoming-rides-shell .card-actions .btn-accept {
+  background: #147d57;
+  color: #fff;
+}
+
+.incoming-rides-shell .card-actions .btn-accept:hover:not(:disabled) {
+  background: #106747;
+}
+
+.incoming-rides-shell .card-actions button:focus-visible {
+  outline: 3px solid rgba(20, 125, 87, 0.22);
+  outline-offset: 2px;
+}
+
+.incoming-rides-shell .card-actions button:disabled {
+  cursor: progress;
+  opacity: 0.55;
+}

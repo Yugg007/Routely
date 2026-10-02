@@ -2,59 +2,98 @@ server:
   port: 8003
   ssl:
     enabled: true
-    key-store: src/main/resources/user-service-keystore.p12
-    key-store-password: <password>
+    # FIX 1: Use 'classpath:' instead of 'src/main/resources/' so it works inside a JAR/Docker
+    key-store: classpath:routely.p12
+    # FIX 2: Corrected password from 'iampass' to 'routely123'
+    key-store-password: routely123
     key-store-type: PKCS12
-    key-alias: user-service
-
-    # 🔑 Truststore (so user-service trusts Eureka's certificate)
-    trust-store: src/main/resources/truststore.p12
-    trust-store-password: <password>
+    key-alias: routely
+    key-password: routely123 # Added explicitly
+    
+    trust-store: classpath:truststore.p12
+    trust-store-password: routely123
     trust-store-type: PKCS12
 
 spring:
   application:
     name: user-service
-    kafka:
-       bootstrap-servers: localhost:9092
-       properties:
-            security.protocol: PLAINTEXT
-       consumer:
-            group-id: user-service-group
-            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-            auto-offset-reset: earliest
-       admin:
-            client-id: user-service-admin
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    properties:
+      # Local development setup
+      security.protocol: PLAINTEXT
+
+    consumer:
+      group-id: user-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
+    admin:
+      client-id: user-service-admin
+
   datasource:
-    url: jdbc:mysql://localhost:3306/routely
+    url: jdbc:mysql://127.0.0.1:3306/routely?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
-    password: <password>
+    password: root123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update   # Optional: create, create-drop, validate, update
+      ddl-auto: update
+
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
+
   data:
-     redis:
-       host: localhost
-       port: 6379
+    redis:
+      host: localhost
+      port: 6379
+
 eureka:
   instance:
     hostname: localhost
+
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
     secure-port-enabled: true
     secure-port: 8003
+
     non-secure-port-enabled: false
     prefer-ip-address: false
+
     instance-id: ${spring.application.name}:${server.port}
+
+    # Secure Eureka links
+    secure-virtual-host-name: ${spring.application.name}
+
+    home-page-url: https://${eureka.instance.hostname}:${server.port}/
+    status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+    health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
+
     metadata-map:
       secure: "true"
 
   client:
-    register-with-eureka: true   # client registers with Eureka
+    register-with-eureka: true
     fetch-registry: true
+
     service-url:
       defaultZone: https://localhost:8761/eureka/
+
+    # TLS config for Eureka client communication
+    tls:
+      enabled: true
+
+      trust-store: classpath:truststore.p12
+      trust-store-password: routely123
+      trust-store-type: PKCS12
+
+      key-store: classpath:routely.p12
+      key-store-password: routely123
+      key-store-type: PKCS12
+      key-password: routely123

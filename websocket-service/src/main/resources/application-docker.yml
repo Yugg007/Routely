@@ -1,0 +1,59 @@
+server:
+   port: 8004
+   ssl:
+      enabled: true
+      key-store: file:/app/certs/keystore.p12
+      key-store-password: routely123
+      key-store-type: PKCS12
+      key-alias: websocket-service
+      key-password: routely123
+      trust-store: file:/app/certs/truststore.p12
+      trust-store-password: routely123
+      trust-store-type: PKCS12
+
+spring:
+   application:
+      name: websocket-service
+
+   kafka:
+      bootstrap-servers: routely-kafka:29092
+      properties:
+       security.protocol: PLAINTEXT
+      consumer:
+           group-id: websocket-service-group
+           key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+           value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+           auto-offset-reset: latest
+      admin:
+         client-id: user-service-admin
+
+   data:
+      redis:
+         host: routely-redis
+         port: 6379
+eureka:
+   instance:
+      hostname: websocket-service
+      secure-port-enabled: true
+      secure-port: 8004
+      non-secure-port-enabled: false
+      prefer-ip-address: false
+      instance-id: ${spring.application.name}:${server.port}
+      metadata-map:
+         secure: true
+
+   client:
+      register-with-eureka: true
+      fetch-registry: true
+      service-url:
+         defaultZone: https://eureka-server:8761/eureka/
+      
+      tls:
+        enabled: true
+        trust-store: file:/app/certs/truststore.p12
+        trust-store-password: routely123
+        trust-store-type: PKCS12
+        key-store: file:/app/certs/keystore.p12
+        key-store-password: routely123
+        key-store-type: PKCS12
+        key-alias: websocket-service

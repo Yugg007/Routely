@@ -1,7 +1,13 @@
 // Dashboard.jsx
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "../Dashboard.css";
-import { GoogleMap, Marker, OverlayView, Polyline, useJsApiLoader } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  OverlayView,
+  Polyline,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 
 import {
   initGoogleServices,
@@ -12,18 +18,20 @@ import {
 } from "../Functionality";
 
 import { useDispatch, useSelector } from "react-redux";
-import { cacheRoute } from "../../../store/routeCacheSlice";
 import { BackendService } from "../../../utils/ApiConfig/ApiMiddleWare";
 import ApiEndpoints from "../../../utils/ApiConfig/ApiEndpoints";
-import useWebSocket from "react-use-websocket";
 import Property from "../../../constants/Property";
 import Data from "../../../constants/Data";
 import STATE from "../../../constants/States";
 import Constants from "../../../constants/Constant";
 import WebSocketAction from "../../../constants/WebSocketAction";
-import GoogleMapComponent from "./GoogleMapComponent";
-import SideBar from "./SideBar";
-import { ACTOR_STATE, ID, setAuthSession, updateUserWorkflowState } from "../../../store/authCacheSlice";
+import GoogleMapComponent from "./GoogleMapComponent/GoogleMapComponent";
+import SideBar from "./SideBar/SideBar";
+import {
+  ACTOR_STATE,
+  ID,
+  updateUserWorkflowState,
+} from "../../../store/authCacheSlice";
 import { useLazySocket } from "../../WebSocketHandler/useLazySocket";
 const WS_URL = Property.User_WS_URL;
 
@@ -38,20 +46,29 @@ const UserDashboard = () => {
   const dispatch = useDispatch();
   const id = useSelector(ID);
   const actorState = useSelector(ACTOR_STATE);
+  console.log("UserDashboard: actorState = ", actorState, "id = ", id);
   const routeCache = useSelector((state) => state?.routeCache?.routes || {});
+  const [, setMapRevision] = useState(0);
 
-  const handleStateChange = useCallback((newState) => {
-    dispatch(updateUserWorkflowState(newState));
-  }, [dispatch, updateUserWorkflowState]);
+  const refreshMap = useCallback(() => {
+    setMapRevision((revision) => revision + 1);
+  }, []);
 
+  const handleStateChange = useCallback(
+    (newState) => {
+      dispatch(updateUserWorkflowState(newState));
+    },
+    [dispatch, updateUserWorkflowState],
+  );
 
   // Map and location states
-  const [location, setLocation] = useState({
-    center: FALLBACK,
+  const locationRef = useRef({
+    center: null,
     pickup: null,
     drop: null,
     routePath: null,
-    drivers: driversTempLocation
+    drivers: driversTempLocation,
+    rideDriver: null,
   });
 
   //Search and UI Suggestions states
@@ -59,7 +76,7 @@ const UserDashboard = () => {
     pickupQuery: "",
     dropQuery: "",
     pickupSuggestions: [],
-    dropSuggestions: []
+    dropSuggestions: [],
   });
 
   // Ride details and status states
@@ -67,7 +84,7 @@ const UserDashboard = () => {
     rideTypeId: "car",
     distanceKm: 0,
     etaMin: 0,
-    estimatedFare: 0
+    estimatedFare: 0,
   });
 
   const mapRef = useRef(null);
@@ -75,68 +92,105 @@ const UserDashboard = () => {
   const geocoderRef = useRef(null);
   const matchTimer = useRef(null);
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: UserMapLibrarys,
   });
 
-  const handleWebSocketResponseMessage = useCallback((event) => {
-    try {
-      const { type, payload } = JSON.parse(event.data);
+  const updateLocationRef = useCallback((driverPayload) => {
+    if (!driverPayload) return;
 
-      // Log using a structured format for easier debugging in production
-      console.debug(`[WS RECV] Type: ${type}`, payload);
+    const prev = locationRef.current;
 
-      switch (type) {
-        case 'DriverLocationAround3Km':
-        case USER_WEBSOCKET_ACTIONS.AVAILABLE_DRIVERS:
-          if (Array.isArray(payload)) {
-            // Update location only if we have driver data
-            setLocation(prev => ({
-              ...prev,
-              drivers: payload
-            }));
-          }
-          break;
-        case USER_WEBSOCKET_ACTIONS.USER_LOCATION_SYNCED:
-          break;
+    // Log previous state
+    console.log("Previous location ref:", prev);
 
-        case STATE.STATE_CHANGE:
-          handleStateChange(payload);
-          break;
+    locationRef.current = {
+      ...prev,
+      rideDriver: {
+        ...prev.rideDriver,
+        ...driverPayload,
+      },
+    };
+    // alert("Driver location updated: " + JSON.stringify(locationRef.current.rideDriver));
+    refreshMap();
+  }, [refreshMap]);
 
-        case 'ERROR':
-          setBooking(prev => ({
-            ...prev,
-            status: `Error Code: ${payload?.code || 'UNKNOWN_ERROR'}`
-          }));
-          break;
+  const handleWebSocketResponseMessage = useCallback(
+    (event) => {
+      try {
+        const { type, payload } = JSON.parse(event.data);
 
-        default:
-          console.warn(`[WS] Unhandled message type: ${type}`);
+        // Log using a structured format for easier debugging in production
+        console.debug(`[WS RECV] Type: ${type}`, payload);
+
+        switch (type) {
+          case "DriverLocationAround3Km":
+          case USER_WEBSOCKET_ACTIONS.AVAILABLE_DRIVERS:
+            if (Array.isArray(payload)) {
+              // Update location only if we have driver data
+              locationRef.current.drivers = payload;
+              refreshMap();
+            }
+            break;
+
+          case USER_WEBSOCKET_ACTIONS.DRIVER_LOCATION_SYNCED:
+            console.log("Driver location synced payload: ", payload);
+            if (Array.isArray(payload) && payload.length > 0) {
+              updateLocationRef(payload[0]);
+            } else if (payload && typeof payload === "object") {
+              updateLocationRef(payload);
+            }
+            break;
+
+          case USER_WEBSOCKET_ACTIONS.USER_LOCATION_SYNCED:
+            break;
+
+          case STATE.STATE_CHANGE:
+            handleStateChange(payload);
+            break;
+
+          case "ERROR":
+            console.error(
+              `[WS] Server error: ${payload?.code || "UNKNOWN_ERROR"}`,
+              payload,
+            );
+            break;
+
+          default:
+            console.warn(`[WS] Unhandled message type: ${type}`);
+        }
+      } catch (error) {
+        console.error("[WS] Failed to parse message:", error);
       }
-    } catch (error) {
-      console.error("[WS] Failed to parse message:", error);
-    }
-  }, [handleStateChange]); // Ensure all external functions used inside are in dependencies
+    },
+    [handleStateChange, refreshMap, updateLocationRef],
+  ); // Ensure all external functions used inside are in dependencies
 
+  const onMessageReceived = useCallback(
+    (event) => {
+      handleWebSocketResponseMessage(event);
+    },
+    [handleWebSocketResponseMessage],
+  ); // Stable reference
 
-  const onMessageReceived = useCallback((event) => {
-    handleWebSocketResponseMessage(event);
-  }, [handleWebSocketResponseMessage]); // Stable reference
-
-  const { handleWebSocketRequestMessage, startConnection, stopConnection, readyState } = useLazySocket(onMessageReceived, WS_URL);
-
+  const {
+    handleWebSocketRequestMessage,
+    startConnection,
+  } = useLazySocket(onMessageReceived, WS_URL);
 
   const calculateFare = async (dKm, dMin, type) => {
     try {
       const response = await BackendService(ApiEndpoints.estimateFare, {
         distanceKm: dKm,
         durationMin: dMin,
-        rideType: type
+        rideType: type,
       });
       if (response.data?.estimatedFare) {
-        setRide(prev => ({ ...prev, estimatedFare: response.data.estimatedFare }));
+        setRide((prev) => ({
+          ...prev,
+          estimatedFare: response.data.estimatedFare,
+        }));
       }
     } catch (error) {
       console.error("Fare error:", error);
@@ -144,30 +198,40 @@ const UserDashboard = () => {
   };
 
   // Update logic example for computing a route
-  const setValuesToStates = useCallback((path, dkm, mins, bounds) => {
-    setLocation(prev => ({ ...prev, routePath: path }));
-    setRide(prev => ({
-      ...prev,
-      distanceKm: Number(dkm.toFixed(2)),
-      etaMin: mins
-    }));
+  const setValuesToStates = useCallback(
+    (path, dkm, mins, bounds) => {
+      locationRef.current.routePath = path;
+      refreshMap();
+      setRide((prev) => ({
+        ...prev,
+        distanceKm: Number(dkm.toFixed(2)),
+        etaMin: mins,
+      }));
 
-    setTimeout(() => {
-      if (mapRef.current && bounds) {
-        try {
-          mapRef.current.fitBounds(bounds);
-        } catch (e) { console.error("Map bounds error", e); }
-      }
-    }, 80);
+      setTimeout(() => {
+        if (mapRef.current && bounds) {
+          try {
+            mapRef.current.fitBounds(bounds);
+          } catch (e) {
+            console.error("Map bounds error", e);
+          }
+        }
+      }, 80);
 
-    // We pass the current rideTypeId from the state
-    calculateFare(dkm, mins, ride.rideTypeId);
-  }, [ride.rideTypeId]);
-
+      // We pass the current rideTypeId from the state
+      calculateFare(dkm, mins, ride.rideTypeId);
+    },
+    [ride.rideTypeId, refreshMap],
+  );
 
   // init google services for address suggestion and forward/reverse geocoding(lat/lng ↔ address)
   useEffect(() => {
-    if (isLoaded && window.google && !serviceRef.current && !geocoderRef.current) {
+    if (
+      isLoaded &&
+      window.google &&
+      !serviceRef.current &&
+      !geocoderRef.current
+    ) {
       const { autocompleteService, geocoder } = initGoogleServices();
       serviceRef.current = autocompleteService;
       geocoderRef.current = geocoder;
@@ -176,37 +240,54 @@ const UserDashboard = () => {
   }, [isLoaded]);
 
   const pickAndDropLocationUpdateRequired = () => {
-    if (actorState === USER_STATES.IDLE || actorState == null) return true;
+    if (
+      actorState === USER_STATES.IDLE ||
+      actorState == null ||
+      actorState === USER_STATES.ON_TRIP
+    )
+      return true;
     return false;
-  }
+  };
   const getCurrentLocationAndAddress = useCallback(() => {
     if (navigator.geolocation && isLoaded) {
       navigator.geolocation.getCurrentPosition((pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: "Your location" };
+        const loc = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          label: "Your location",
+        };
 
         if (pickAndDropLocationUpdateRequired()) {
-          let newPickUp = location.pickup ? location.pickup : loc;
-          let newCenter = location.center || loc;
-          let newPickUpLabel = newPickUp.label || "Your location";
-          setLocation(prev => ({ ...prev, center: newCenter, pickup: newPickUp }));
-          setSearch(prev => ({ ...prev, pickupQuery: newPickUpLabel }));
+          let newPickUp = locationRef.current.pickup
+            ? locationRef.current.pickup
+            : loc;
+          let newCenter = locationRef.current.center || loc;
+
+          locationRef.current.center = newCenter;
+          locationRef.current.pickup = newPickUp;
+          refreshMap();
+
+          setSearch((prev) => ({
+            ...prev,
+            pickupQuery: newPickUp.label || "Your location",
+          }));
 
           reverseGeocode(geocoderRef.current, loc, (addr) => {
             let newPickUpQuery = search.pickupQuery || addr;
-            let newLabel = location.pickup?.label || addr;
+            let newLabel = locationRef.current.pickup?.label || addr;
 
-            setSearch(prev => ({ ...prev, pickupQuery: newPickUpQuery }));
-            setLocation(prev => ({ ...prev, pickup: { ...newPickUp, label: newLabel } }));
+            setSearch((prev) => ({ ...prev, pickupQuery: newPickUpQuery }));
+            locationRef.current.pickup = { ...newPickUp, label: newLabel };
+            refreshMap();
           });
-        }
-        else {
-          console.log("Updating center and pickup : ", loc, location);
-          let newCenter = location.center || loc;
-          setLocation(prev => ({ ...prev, center: newCenter}));
+        } else {
+          let newCenter = locationRef.current.center || loc;
+          locationRef.current.center = newCenter;
+          refreshMap();
         }
       });
     }
-  }, [isLoaded, id]);
+  }, [isLoaded, id, refreshMap]);
 
   // A. Get current location on load
   useEffect(() => {
@@ -217,98 +298,106 @@ const UserDashboard = () => {
   const lastEmitTime = useRef(Date.now());
 
   useEffect(() => {
-
     if (matchTimer.current) clearInterval(matchTimer.current);
 
     matchTimer.current = setInterval(() => {
       let now = Date.now();
-      let shoulEmit = (now - lastEmitTime.current) >= UserLocationPingInterval;
+      let shoulEmit = now - lastEmitTime.current >= UserLocationPingInterval;
       lastEmitTime.current = now;
-      if (location.pickup && shoulEmit) {
-        const payload = { id, ...location.pickup };
-        handleWebSocketRequestMessage(USER_WEBSOCKET_ACTIONS.USER_LOCATION_PUSH, payload);
+      if (locationRef.current.pickup && shoulEmit) {
+        const payload = { id, ...locationRef.current.pickup };
+        handleWebSocketRequestMessage(
+          USER_WEBSOCKET_ACTIONS.USER_LOCATION_PUSH,
+          payload,
+        );
       }
     }, UserLocationPingInterval);
 
     return () => {
       if (matchTimer.current) clearInterval(matchTimer.current);
     };
+  }, []);
 
-  }, [location.pickup]);
+  const { pickup, drop } = locationRef.current;
 
   useEffect(() => {
-    if (!location.pickup || !location.drop || !isLoaded) return;
+    if (!pickup || !drop || !isLoaded) return;
 
-    const key = `${location.pickup.lat},${location.pickup.lng}_${location.drop.lat},${location.drop.lng}_${ride.rideTypeId}`;
-
-    console.log("Route cache key: ", key);
+    const key = `${pickup.lat},${pickup.lng}_${drop.lat},${drop.lng}_${ride.rideTypeId}`;
     if (routeCache[key]) {
       const { routePath, distanceKm, durationMin, bounds } = routeCache[key];
       setValuesToStates(routePath, distanceKm, durationMin, bounds);
       return;
     }
 
-    console.log("Computing new route for : ", location.pickup, location.drop);
-
     computeGoogleRoute(
-      location.pickup,
-      location.drop,
+      pickup,
+      drop,
       ride.rideTypeId,
       (path, dkm, mins, bounds) => {
         setValuesToStates(path, dkm, mins, bounds);
       },
       (dkm, mins, path) => {
         setValuesToStates(path, dkm, mins, null);
-      }
+      },
     );
-  }, [location.drop, location.pickup, ride.rideTypeId, isLoaded]);
+  }, [pickup, drop, ride.rideTypeId, isLoaded]);
 
   // D. Handle Place Search Suggestions
   function handlePlaceSearch(input, type) {
-    const currentSuggestion = location.pickup
-      ? { id: "__me__", label: `Use my location — ${location.pickup.label || "Your location"}` }
+    const currentSuggestion = locationRef.current.pickup
+      ? {
+          id: "__me__",
+          label: `Use my location — ${locationRef.current.pickup.label || "Your location"}`,
+        }
       : null;
 
-    searchPlaces(serviceRef.current, input, location.center, currentSuggestion, (results) => {
-      console.log("Place search results: ", results);
-      setSearch(prev => ({
-        ...prev,
-        [type === "pickup" ? "pickupSuggestions" : "dropSuggestions"]: results
-      }));
-    });
+    searchPlaces(
+      serviceRef.current,
+      input,
+      locationRef.current.center,
+      currentSuggestion,
+      (results) => {
+        console.log("Place search results: ", results);
+        setSearch((prev) => ({
+          ...prev,
+          [type === "pickup" ? "pickupSuggestions" : "dropSuggestions"]:
+            results,
+        }));
+      },
+    );
   }
 
   function handleBlur(type) {
     setTimeout(() => {
-      setSearch(prev => ({
+      setSearch((prev) => ({
         ...prev,
-        [type === "pickup" ? "pickupSuggestions" : "dropSuggestions"]: []
+        [type === "pickup" ? "pickupSuggestions" : "dropSuggestions"]: [],
       }));
     }, 180);
   }
 
   function selectSuggestion(s, type) {
     // Handle "Use my location" selection
-    console.log("Selected suggestion: ", s, "Type: ", type);
     if (s.id === "__me__") {
-      if (!location.pickup) return;
+      if (!locationRef.current.pickup) return;
 
       if (type === "pickup") {
-        // If setting pickup to current location (already in state)
-        setSearch(prev => ({
+        setSearch((prev) => ({
           ...prev,
-          pickupQuery: location.pickup.label,
-          pickupSuggestions: []
+          pickupQuery: locationRef.current.pickup.label,
+          pickupSuggestions: [],
         }));
-        setLocation(prev => ({ ...prev, center: location.pickup, pickup: location.pickup }));
+        locationRef.current.center = locationRef.current.pickup;
+        refreshMap();
       } else {
-        // If setting drop to the current location coordinates
-        setSearch(prev => ({
+        setSearch((prev) => ({
           ...prev,
-          dropQuery: location.pickup.label,
-          dropSuggestions: []
+          dropQuery: locationRef.current.pickup.label,
+          dropSuggestions: [],
         }));
-        setLocation(prev => ({ ...prev, drop: location.pickup }));
+        locationRef.current.drop = locationRef.current.pickup;
+        refreshMap();
       }
       return;
     }
@@ -316,51 +405,84 @@ const UserDashboard = () => {
     // Handle Google Places API selection
     geocodePlaceId(geocoderRef.current, s.id, (loc) => {
       if (type === "pickup") {
-        // Update location and search objects for Pickup
-        console.log("Updating center and pickup : ", loc, location);
-        setLocation(prev => ({
-          ...prev,
-          pickup: loc,
-          center: loc
-        }));
-        setSearch(prev => ({
+        locationRef.current.pickup = loc;
+        locationRef.current.center = loc;
+        refreshMap();
+        setSearch((prev) => ({
           ...prev,
           pickupQuery: loc.label,
-          pickupSuggestions: []
+          pickupSuggestions: [],
         }));
       } else {
-        // Update location and search objects for Drop
-        console.log("Updating center and pickup : ", loc, location);
-        setLocation(prev => ({
-          ...prev,
-          drop: loc
-        }));
-        setSearch(prev => ({
+        locationRef.current.drop = loc;
+        refreshMap();
+        setSearch((prev) => ({
           ...prev,
           dropQuery: loc.label,
-          dropSuggestions: []
+          dropSuggestions: [],
         }));
-        // Note: We usually don't move the center for the drop-off 
-        // so the user can still see their pickup point.
-      }
+}
     });
   }
+
+  const driverLocationIntervalRef = useRef(null);
+
+  useEffect(() => {
+    if (driverLocationIntervalRef.current) {
+      clearInterval(driverLocationIntervalRef.current);
+      driverLocationIntervalRef.current = null;
+    }
+
+    if (
+      actorState === USER_STATES.WAITING_FOR_DRIVER &&
+      ride &&
+      ride.status === "ACCEPTED"
+    ) {
+      const syncDriverLocation = async () => {
+        try {
+          handleWebSocketRequestMessage(
+            USER_WEBSOCKET_ACTIONS.DRIVER_LOCATION_SYNCED,
+            {
+              driverId: ride.driverId,
+            },
+          );
+        } catch (err) {
+          console.error("Error updating driver position:", err);
+        }
+      };
+
+      // Initial fetch immediately
+      syncDriverLocation();
+
+      driverLocationIntervalRef.current = setInterval(
+        syncDriverLocation,
+        10000,
+      );
+    }
+
+    // Cleanup interval on state change or unmount
+    return () => {
+      if (driverLocationIntervalRef.current) {
+        clearInterval(driverLocationIntervalRef.current);
+        driverLocationIntervalRef.current = null;
+      }
+    };
+  }, [actorState, ride?.status, ride?.driverId, handleWebSocketRequestMessage]);
 
   return (
     <main className="rd-main" role="main">
       {/* Map */}
       <div className="rd-map" aria-label="Map area">
-        {isLoaded ? (
+        {loadError ? (
+          <div className="rd-map-fallback rd-map-error" role="alert">
+            Map unavailable. Check your connection and Google Maps configuration.
+          </div>
+        ) : isLoaded ? (
           <GoogleMapComponent
-            center={location.center}
-            pickup={location.pickup}
-            drop={location.drop}
-            routePath={location.routePath}
-            drivers={location.drivers}
+            locationRef={locationRef}
             mapRef={mapRef}
             actorState={actorState}
           />
-
         ) : (
           <div className="rd-map-fallback">Map loading…</div>
         )}
@@ -372,8 +494,7 @@ const UserDashboard = () => {
         setSearch={setSearch}
         ride={ride}
         setRide={setRide}
-        location={location}
-        setLocation={setLocation}
+        locationRef={locationRef}
         handlePlaceSearch={handlePlaceSearch}
         selectSuggestion={selectSuggestion}
         handleBlur={handleBlur}

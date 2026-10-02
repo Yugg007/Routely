@@ -2,26 +2,37 @@ server:
   port: 8002
   ssl:
     enabled: true
-    key-store: src/main/resources/api-gateway-keystore.p12
-    key-store-password: <password>
+    # FIX 1: Use 'classpath:' instead of 'src/main/resources/' so it works inside a JAR/Docker
+    key-store: classpath:routely.p12
+    # FIX 2: Corrected password from 'iampass' to 'routely123'
+    key-store-password: routely123
     key-store-type: PKCS12
-    key-alias: api-gateway
-
-    # Truststore to trust downstream services or Eureka certificates
-    trust-store: src/main/resources/truststore.p12
-    trust-store-password: <password>
+    key-alias: routely
+    key-password: routely123 # Added explicitly
+    
+    trust-store: classpath:truststore.p12
+    trust-store-password: routely123
     trust-store-type: PKCS12
+    
+
 
 spring:
   application:
     name: api-gateway
-
   cloud:
     gateway:
-      # Global CORS configuration
+      # FIX 1: This block must configuration-wise sit under spring.cloud.gateway directly, not under 'server'
+      httpclient:
+        use-forward-headers: true
+        ssl:
+          use-insecure-trust-manager: false
+          trust-store: classpath:truststore.p12
+          trust-store-password: routely123
+          trust-store-type: PKCS12
+
       globalcors:
         add-to-simple-url-handler-mapping: true
-        corsConfigurations:
+        cors-configurations:
           '[/**]':
             allowedOrigins:
               - "http://localhost:3000"
@@ -40,31 +51,26 @@ spring:
               - Set-Cookie
             allowCredentials: true
             maxAge: 3600
-
       routes:
-        # User Service (HTTPS via Eureka)
+        # FIX 3: Changed 'lb://' to 'lbs://' to force the load balancer to route using HTTPS
         - id: user-service
-          uri: lb://USER-SERVICE  # Eureka load-balanced URI
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/users/**
           filters:
             - StripPrefix=1
-
         - id: websocket-service
           uri: lb://WEBSOCKET-SERVICE
           predicates:
-          - Path=/ws/**
-
+            - Path=/ws/**
+          metadata:
+            response-timeout: 0
         - id: trip-service
           uri: lb://TRIP-SERVICE
           predicates:
-          - Path=/trips/**
+            - Path=/trips/**
           filters:
-          - StripPrefix=1
-
-
-      httpclient:
-        use-forward-headers:true
+            - StripPrefix=1
       discovery:
         locator:
           enabled: true
@@ -73,16 +79,26 @@ spring:
 eureka:
   instance:
     hostname: localhost
-    secure-port-enabled: true       # Use HTTPS port
-    secure-port: 8002
-    non-secure-port-enabled: false  # Only HTTPS
-    prefer-ip-address: false
+    secure-port-enabled: true
+    non-secure-port-enabled: false
+    # Telling Eureka to pass the secure HTTPS path to other services
+    secure-virtual-host-name: ${spring.application.name}
+    home-page-url: https://${eureka.instance.hostname}:${server.port}/
+    status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+    health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
     instance-id: ${spring.application.name}:${server.port}
     metadata-map:
-      secure: "true"                # Mark instance as secure for gateway
-
+      secure: "true"
   client:
-    register-with-eureka: false
+    register-with-eureka: true # Gateway usually registers, change to true if needed
     fetch-registry: true
     service-url:
+      # Updated to use absolute secure HTTPS endpoint for Eureka Server
       defaultZone: https://localhost:8761/eureka/
+
+#logging:
+#  level:
+#    reactor.netty: DEBUG
+#    org.springframework.cloud.gateway: DEBUG
+#    io.netty.handler.ssl: DEBUG
+#    org.springframework.web.reactive.function.client: DEBUG

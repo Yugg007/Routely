@@ -1,36 +1,28 @@
 package com.routely.trip_service.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.routely.shared.enums.RideStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+
 
 @Entity
 @Table(name = "rides")
-@EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Ride {
 
 	@Id
@@ -96,6 +88,12 @@ public class Ride {
 
 	@Column(name = "is_pin_verified")
 	private boolean isPinVerified = false;
+	
+	@Column(name = "fare", precision = 10, scale = 2)
+    private BigDecimal fare = BigDecimal.ZERO;
+	
+	@Column(name = "payment_method")
+    private String paymentMethod;
 
 	public Long getRideId() {
 		return rideId;
@@ -248,6 +246,24 @@ public class Ride {
 	public void setPinVerified(boolean isPinVerified) {
 		this.isPinVerified = isPinVerified;
 	}
+	
+	
+
+	public BigDecimal getFare() {
+		return fare;
+	}
+
+	public void setFare(BigDecimal fare) {
+		this.fare = fare;
+	}
+
+	public String getPaymentMethod() {
+		return paymentMethod;
+	}
+
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
 
 	public Ride() {
 		super();
@@ -257,7 +273,7 @@ public class Ride {
 	public Ride(Long rideId, String startAddress, String startLat, String startLng, String endAddress, String endLat,
 			String endLng, Long userId, String userMobNo, String rideType, RideStatus status, String name,
 			Long driverId, String createdBy, LocalDateTime createdOn, String updatedBy, LocalDateTime updatedOn,
-			String otpPin, boolean isPinVerified) {
+			String otpPin, boolean isPinVerified, String paymentMethod, BigDecimal fare) {
 		super();
 		this.rideId = rideId;
 		this.startAddress = startAddress;
@@ -278,6 +294,8 @@ public class Ride {
 		this.updatedOn = updatedOn;
 		this.otpPin = otpPin;
 		this.isPinVerified = isPinVerified;
+		this.paymentMethod = paymentMethod;
+		this.fare = fare;
 	}
 
 }

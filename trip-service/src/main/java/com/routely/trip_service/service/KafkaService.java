@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.routely.shared.dto.RideCancelledEvent;
+import com.routely.shared.dto.RideEvent;
 import com.routely.shared.model.RideRequest;
 import com.routely.shared.utils.Constants;
 import com.routely.shared.utils.RideUtil;
@@ -25,9 +25,10 @@ public class KafkaService {
 	private ObjectMapper objectMapper;
 	
     private final static String ROUTELY_TRIP_TOPIC = Constants.ROUTELY_TRIP_TOPIC;
-	private final String ROUTELY_TRIP_STATE_TOPIC = Constants.ROUTELY_TRIP_STATE_TOPIC;
+	private final String ROUTELY_STATE_TOPIC = Constants.ROUTELY_STATE_TOPIC;
     private final static String EVENT_RIDE_ACCEPTED = Constants.EVENT_RIDE_ACCEPTED;
     private final static String EVENT_RIDE_REQUESTED = Constants.EVENT_RIDE_REQUESTED;
+	private final String EVENT_RIDE_COMPLETED = Constants.EVENT_RIDE_COMPLETED;
 
     private <T> void setIfPresent(T value, Consumer<T> setter) {
         if (value != null) {
@@ -37,20 +38,23 @@ public class KafkaService {
     
     String preprocessing(TripRequest request) throws InvalidProtocolBufferException {
     	RideRequest.Builder builder = RideRequest.newBuilder();
-    	setIfPresent(request.getStartAddress(), builder::setStartAddress);
-    	setIfPresent(request.getStartLat(),      builder::setStartLat);
-    	setIfPresent(request.getStartLng(),      builder::setStartLng);
-    	setIfPresent(request.getEndAddress(),    builder::setEndAddress);
-    	setIfPresent(request.getEndLat(),        builder::setEndLat);
-    	setIfPresent(request.getEndLng(),        builder::setEndLng);
-    	setIfPresent(request.getUserId(),        builder::setUserId);
-    	setIfPresent(request.getUserMobNo(),     builder::setUserMobNo);
-    	setIfPresent(request.getName(),          builder::setName);
-    	setIfPresent(request.getDriverId(),      builder::setDriverId);
-    	setIfPresent(request.getDriverName(),    builder::setDriverName);
-    	setIfPresent(request.getDriverMobNo(),   builder::setDriverMobNo);
-    	setIfPresent(request.getRideId(),        builder::setRideId);
-    	setIfPresent(request.getRideType(),      builder::setRideType);
+    	setIfPresent(request.getStartAddress(),   builder::setStartAddress);
+    	setIfPresent(request.getStartLat(),        builder::setStartLat);
+    	setIfPresent(request.getStartLng(),        builder::setStartLng);
+    	setIfPresent(request.getEndAddress(),      builder::setEndAddress);
+    	setIfPresent(request.getEndLat(),          builder::setEndLat);
+    	setIfPresent(request.getEndLng(),          builder::setEndLng);
+    	setIfPresent(request.getUserId(),          builder::setUserId);
+    	setIfPresent(request.getUserMobNo(),       builder::setUserMobNo);
+    	setIfPresent(request.getName(),            builder::setName);
+    	setIfPresent(request.getDriverId(),        builder::setDriverId);
+    	setIfPresent(request.getDriverName(),      builder::setDriverName);
+    	setIfPresent(request.getDriverMobNo(),     builder::setDriverMobNo);
+    	setIfPresent(request.getRideId(),          builder::setRideId);
+    	setIfPresent(request.getRideType(),        builder::setRideType);
+    	if(request.getFare() != null) {
+    		setIfPresent(request.getFare().toString(), builder::setFare);    		
+    	}
 
     	RideRequest req = builder.build();
 		return RideUtil.toJson(req);
@@ -82,18 +86,25 @@ public class KafkaService {
     }
     
     public void handleOutboxEvent(String key, String payload) {
-    	kafkaTemplate.send(ROUTELY_TRIP_STATE_TOPIC, key, payload);    	
+    	kafkaTemplate.send(ROUTELY_STATE_TOPIC, key, payload);    	
     }
 
-	public void handleRideCancellationEvent(String eventKey, String eventType) {
-		// TODO Auto-generated method stub
-		kafkaTemplate.send(ROUTELY_TRIP_STATE_TOPIC, eventKey, eventType);
-	}
-
-	public void handleRideCancellationEvent(String key, RideCancelledEvent rideCancelledEvent) throws JsonProcessingException {
+	public void handleRideCancellationEvent(String key, RideEvent rideCancelledEvent) throws JsonProcessingException {
 		// TODO Auto-generated method stub
 		String payload = objectMapper.writeValueAsString(rideCancelledEvent);
 		kafkaTemplate.send(ROUTELY_TRIP_TOPIC, key, payload);
+		
+	}
+
+	public void sendRideCompletedDetailToRedis(TripRequest request) {
+		try {
+			String json = preprocessing(request);
+			kafkaTemplate.send(ROUTELY_TRIP_TOPIC, EVENT_RIDE_COMPLETED, json);
+			System.out.printf("✅ Produced message: key=%s value=%s%n", EVENT_RIDE_COMPLETED, json);
+		} catch (InvalidProtocolBufferException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
     

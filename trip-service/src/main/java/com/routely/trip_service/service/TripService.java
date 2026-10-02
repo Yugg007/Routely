@@ -1,5 +1,6 @@
 package com.routely.trip_service.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routely.shared.dto.Actor;
-import com.routely.shared.dto.RideCancelledEvent;
+import com.routely.shared.dto.RideEvent;
 import com.routely.shared.enums.ActorType;
 import com.routely.shared.enums.RideStatus;
 import com.routely.shared.enums.SessionState;
@@ -44,13 +45,11 @@ public class TripService {
 	
 	private final String ROUTELY_FRONTEND = Constants.ROUTELY_FRONTEND;
 	private final String EVENT_RIDE_CANCELLED = Constants.EVENT_RIDE_CANCELLED;
-	private final String EVENT_RIDE_CANCELLED_BY_USER = Constants.EVENT_RIDE_CANCELLED_BY_USER;
-	private final String EVENT_RIDE_CANCELLED_BY_DRIVER = Constants.EVENT_RIDE_CANCELLED_BY_DRIVER;
 	private final String EVENT_RIDE_ACCEPTED = Constants.EVENT_RIDE_ACCEPTED;
+	private final String EVENT_RIDE_COMPLETED = Constants.EVENT_RIDE_COMPLETED;
     private final String EVENT_ON_TRIP = Constants.EVENT_ON_TRIP;
     private final String EVENT_RIDE_REQUEST = Constants.EVENT_RIDE_REQUESTED;
-    private final String STATE_TRANSFER = Constants.STATE_TRANSFER;
-	
+    private final String EVENT_STATE_TRANSFER = Constants.EVENT_STATE_TRANSFER;	
 
 	@Transactional
 	public Long requestRide(TripRequest request) {
@@ -72,6 +71,7 @@ public class TripService {
 		ride.setUserId(request.getUserId());
 		ride.setCreatedBy(ROUTELY_FRONTEND);
 		ride.setOtpPin(PinUtil.generateSecurePin());
+		ride.setFare(request.getFare());
 		
 	    Optional<Ride> activeRide = rideRepository.findActiveRideForUpdate(request.getUserId(), 
 	        List.of(RideStatus.MATCHING, RideStatus.ACCEPTED, RideStatus.ON_TRIP));
@@ -86,11 +86,11 @@ public class TripService {
 		request.setRideId(ride.getRideId());
 
 		try {
-			Actor userCurrState = makeActor(ride.getUserId(), SessionState.MATCHING, ActorType.USER);
+			Actor userCurrState = new Actor(SessionState.MATCHING, ride.getUserId(), ActorType.USER);
             OutboxEvent outbox = new OutboxEvent();
             outbox.setAggregateType(EVENT_RIDE_REQUEST);
             outbox.setAggregateId(ride.getRideId().toString());
-            outbox.setEventType(STATE_TRANSFER);
+            outbox.setEventType(EVENT_STATE_TRANSFER);
             outbox.setPayload(objectMapper.writeValueAsString(userCurrState));
 
             outboxRepository.save(outbox);
@@ -121,11 +121,11 @@ public class TripService {
 
 	
 		try {
-			Actor userCurrState = makeActor(userId, SessionState.WAITING_FOR_DRIVER, ActorType.USER);
+			Actor userCurrState = new Actor(SessionState.WAITING_FOR_DRIVER, userId, ActorType.USER);
             OutboxEvent outbox = new OutboxEvent();
             outbox.setAggregateType(EVENT_RIDE_ACCEPTED);
             outbox.setAggregateId(rideId.toString());
-            outbox.setEventType(STATE_TRANSFER);
+            outbox.setEventType(EVENT_STATE_TRANSFER);
             outbox.setPayload(objectMapper.writeValueAsString(userCurrState));
 
             outboxRepository.save(outbox);
@@ -135,11 +135,11 @@ public class TripService {
         }
 
 	    try {            
-	    	Actor driverCurrState = makeActor(driverId, SessionState.ACCEPTED, ActorType.DRIVER);
+	    	Actor driverCurrState = new Actor(SessionState.ACCEPTED, driverId, ActorType.DRIVER);
             OutboxEvent outbox = new OutboxEvent();
             outbox.setAggregateType(EVENT_RIDE_ACCEPTED);
             outbox.setAggregateId(rideId.toString());
-            outbox.setEventType(STATE_TRANSFER);
+            outbox.setEventType(EVENT_STATE_TRANSFER);
             outbox.setPayload(objectMapper.writeValueAsString(driverCurrState));
 
             outboxRepository.save(outbox);
@@ -153,16 +153,9 @@ public class TripService {
 		return AcceptRideResult.success(rideId, driverId);
 	}
 
-	private Actor makeActor(Long id, SessionState state, ActorType type) {
-		Actor currState = new Actor();
-		currState.setActorId(id);
-		currState.setActorState(state);
-		currState.setActorType(type);
-		return currState;
-	}
 
 	@Transactional(readOnly = true)
-	public Optional<Ride> getUserCurrentRide(Long userId) {
+	public Ride getUserCurrentRide(Long userId) {
         // Define what "Current" means to avoid returning an old finished ride.
         List<RideStatus> activeStatuses = List.of(
             RideStatus.MATCHING, 
@@ -170,8 +163,12 @@ public class TripService {
             RideStatus.ON_TRIP
         );
 
-        return rideRepository.findTopByUserIdAndStatusInOrderByCreatedOnDesc(userId, activeStatuses);
-    }
+        Optional<Ride> ride = rideRepository.findTopByUserIdAndStatusInOrderByCreatedOnDesc(userId, activeStatuses);
+        if(ride.isPresent()) {
+        	return ride.get();
+        }
+        return null;
+	}
 
 	@Transactional
 	public void cancelRide(TripRequest request, ActorType actorType) throws JsonProcessingException {
@@ -206,54 +203,58 @@ public class TripService {
 	        throw new IllegalStateException("Unable to cancel ride. It may be in progress, already cancelled, or invalid.");
 	    }
 	    
-	    RideCancelledEvent rideCancelledEvent = new RideCancelledEvent();
+	    RideEvent rideCancelledEvent = new RideEvent();
 	    rideCancelledEvent.setDriverId(driverId);
 	    rideCancelledEvent.setUserId(userId);
 	    rideCancelledEvent.setRideId(rideId);
 	    
 	    if(ActorType.DRIVER.equals(actorType)) {
-	    	handleRideCancelledEvent(userId, driverId, rideId, EVENT_RIDE_CANCELLED_BY_DRIVER, SessionState.MATCHING, SessionState.IDLE);
+	    	handleRideCancelledEvent(userId, driverId, rideId, ActorType.DRIVER, SessionState.MATCHING, SessionState.IDLE);
 	    	rideCancelledEvent.setCancelledBy(ActorType.DRIVER);
 	    }
 	    else {
-	    	handleRideCancelledEvent(userId, driverId, rideId, EVENT_RIDE_CANCELLED_BY_USER, SessionState.IDLE, SessionState.IDLE);
+	    	handleRideCancelledEvent(userId, driverId, rideId, ActorType.USER, SessionState.IDLE, SessionState.IDLE);
 	    	rideCancelledEvent.setCancelledBy(ActorType.USER);
 	    }
 	    
 	    kafkaService.handleRideCancellationEvent(EVENT_RIDE_CANCELLED, rideCancelledEvent);
 	}
 
-	private void handleRideCancelledEvent(Long userId, Long driverId, Long rideId, String eventType, SessionState userState, SessionState driverState) throws JsonProcessingException {
+	private void handleRideCancelledEvent(Long userId, Long driverId, Long rideId, ActorType eventType, SessionState userState, SessionState driverState) throws JsonProcessingException {
 		// TODO Auto-generated method stub
-		Actor userCurrState = makeActor(userId, userState, ActorType.USER);
+		Actor userCurrState = new Actor(userState, userId, ActorType.USER);
 		OutboxEvent outbox1 = new OutboxEvent();
-		outbox1.setAggregateType(eventType);
+		outbox1.setAggregateType(eventType.toString());
 		outbox1.setAggregateId(rideId.toString());
-		outbox1.setEventType(STATE_TRANSFER);
+		outbox1.setEventType(EVENT_STATE_TRANSFER);
 		outbox1.setPayload(objectMapper.writeValueAsString(userCurrState));
 		
 		outboxRepository.save(outbox1);
 		
-		if(driverId == null) {
-			Actor driverCurrState = makeActor(driverId, driverState, ActorType.DRIVER);
+		if(driverId != null) {
+			Actor driverCurrState = new Actor(driverState, driverId, ActorType.DRIVER);
 			OutboxEvent outbox2 = new OutboxEvent();
-			outbox2.setAggregateType(eventType);
+			outbox2.setAggregateType(eventType.toString());
 			outbox2.setAggregateId(rideId.toString());
-			outbox2.setEventType(STATE_TRANSFER);
+			outbox2.setEventType(EVENT_STATE_TRANSFER);
 			outbox2.setPayload(objectMapper.writeValueAsString(driverCurrState));
 			
 			outboxRepository.save(outbox2);			
 		}
 	}
 
-	public Optional<Ride> getDriverCurrentRide(Long driverId) {
+	public Ride getDriverCurrentRide(Long driverId) {
 		// TODO Auto-generated method stub
         List<RideStatus> activeStatuses = List.of(
                 RideStatus.ACCEPTED, 
                 RideStatus.ON_TRIP
             );
 
-            return rideRepository.findTopByDriverIdAndStatusInOrderByCreatedOnDesc(driverId, activeStatuses);
+        Optional<Ride> ride =  rideRepository.findTopByDriverIdAndStatusInOrderByCreatedOnDesc(driverId, activeStatuses);
+        if(ride.isPresent()) {
+        	return ride.get();
+        }
+        return null;
 	}
 
 	public RidePinResponse getRidePin(TripRequest request) {
@@ -280,11 +281,11 @@ public class TripService {
     	        .orElseThrow(() -> new ResourceNotFoundException("Ride not found"));
     	
 		try {
-			Actor userCurrState = makeActor(ride.getUserId(), SessionState.ON_TRIP, ActorType.USER);
+			Actor userCurrState = new Actor(SessionState.ON_TRIP, ride.getUserId(), ActorType.USER);
             OutboxEvent outbox = new OutboxEvent();
             outbox.setAggregateType(EVENT_ON_TRIP);
             outbox.setAggregateId(rideId.toString());
-            outbox.setEventType(STATE_TRANSFER);
+            outbox.setEventType(EVENT_STATE_TRANSFER);
             outbox.setPayload(objectMapper.writeValueAsString(userCurrState));
 
             outboxRepository.save(outbox);
@@ -294,11 +295,11 @@ public class TripService {
         }
 
 	    try {            
-	    	Actor driverCurrState = makeActor(ride.getDriverId(), SessionState.ON_TRIP, ActorType.DRIVER);
+	    	Actor driverCurrState = new Actor(SessionState.ON_TRIP, ride.getDriverId(), ActorType.DRIVER);
             OutboxEvent outbox = new OutboxEvent();
             outbox.setAggregateType(EVENT_ON_TRIP);
             outbox.setAggregateId(rideId.toString());
-            outbox.setEventType(STATE_TRANSFER);
+            outbox.setEventType(EVENT_STATE_TRANSFER);
             outbox.setPayload(objectMapper.writeValueAsString(driverCurrState));
 
             outboxRepository.save(outbox);
@@ -309,4 +310,52 @@ public class TripService {
 
         return true;
     }
+
+	public String completeRide(TripRequest request) throws Exception {
+		Long rideId = request.getRideId();
+		Long driverId = request.getDriverId();
+		Long userId = request.getUserId();
+
+		int updatedRows = rideRepository.atomicCompleteRide(
+	            rideId, driverId, RideStatus.COMPLETED, RideStatus.ON_TRIP, LocalDateTime.now()
+			    );
+		
+		if (updatedRows == 0) {
+//	        log.info("Driver {} lost the race for ride {}", driverId, rideId);
+	        throw new IllegalStateException("Not able to complete a ride");
+	    }
+
+	
+		try {
+			Actor userCurrState = new Actor(SessionState.IDLE, userId, ActorType.USER);
+            OutboxEvent outbox = new OutboxEvent();
+            outbox.setAggregateType(EVENT_RIDE_COMPLETED);
+            outbox.setAggregateId(rideId.toString());
+            outbox.setEventType(EVENT_STATE_TRANSFER);
+            outbox.setPayload(objectMapper.writeValueAsString(userCurrState));
+
+            outboxRepository.save(outbox);
+        } catch (JsonProcessingException e) {
+            // Tip: Never let JSON serialization fail silently
+            throw new RuntimeException("Failed to serialize outbox event", e);
+        }
+
+	    try {            
+	    	Actor driverCurrState = new Actor(SessionState.IDLE, driverId, ActorType.DRIVER);
+            OutboxEvent outbox = new OutboxEvent();
+            outbox.setAggregateType(EVENT_RIDE_COMPLETED);
+            outbox.setAggregateId(rideId.toString());
+            outbox.setEventType(EVENT_STATE_TRANSFER);
+            outbox.setPayload(objectMapper.writeValueAsString(driverCurrState));
+
+            outboxRepository.save(outbox);
+        } catch (JsonProcessingException e) {
+            // Tip: Never let JSON serialization fail silently
+            throw new RuntimeException("Failed to serialize outbox event", e);
+        }
+	    
+	    kafkaService.sendRideCompletedDetailToRedis(request);
+
+		return "Ride Completed...";
+	}
 }

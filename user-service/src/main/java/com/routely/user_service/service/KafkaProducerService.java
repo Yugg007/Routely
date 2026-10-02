@@ -12,11 +12,11 @@ public class KafkaProducerService {
 	@Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 	
-	private final String ROUTELY_USER_STATE_TOPIC = Constants.ROUTELY_USER_STATE_TOPIC;
-	private final String STATE_TRANSFER = Constants.STATE_TRANSFER;
+	private final String ROUTELY_STATE_TOPIC = Constants.ROUTELY_STATE_TOPIC;
+	private final String EVENT_STATE_ACKNOWLEDGE = Constants.EVENT_STATE_ACKNOWLEDGE;
 	
 	public void produceStateChangeEvent(String payload) {
-		kafkaTemplate.send(ROUTELY_USER_STATE_TOPIC, STATE_TRANSFER, payload);
+		kafkaTemplate.send(ROUTELY_STATE_TOPIC, EVENT_STATE_ACKNOWLEDGE, payload);
 	}
 
 }

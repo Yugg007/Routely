@@ -1,17 +1,16 @@
-import React, { useEffect, useState, useMemo, useCallback  } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { debounce } from 'lodash';
 
-
-import { RIDE_TYPES, formatINR } from "../Functionality";
-import ApiEndpoints from '../../../utils/ApiConfig/ApiEndpoints';
-import { BackendService } from '../../../utils/ApiConfig/ApiMiddleWare';
-import ConfirmModal from '../../Utility/ConfirmModal/ConfirmModal';
-import STATE from '../../../constants/States';
+import { RIDE_TYPES, formatINR } from "../../Functionality";
+import ApiEndpoints from '../../../../utils/ApiConfig/ApiEndpoints';
+import { BackendService } from '../../../../utils/ApiConfig/ApiMiddleWare';
+import ConfirmModal from '../../../Utility/ConfirmModal/ConfirmModal';
+import STATE from '../../../../constants/States';
 
 import "./SideBar.css";
-import ToastMessage from '../../Utility/ToastMessage/ToastMessage';
+import ToastMessage from '../../../Utility/ToastMessage/ToastMessage';
 import { useDispatch, useSelector } from 'react-redux';
-import { ACTOR_STATE, ID, updateUserWorkflowState, USER } from '../../../store/authCacheSlice';
+import { ACTOR_STATE, updateUserWorkflowState, USER } from '../../../../store/authCacheSlice';
 
 const CANCEL_MODAL_CONTENT = {
     MATCHING: {
@@ -41,95 +40,91 @@ const SideBar = React.memo(({
     setSearch,
     ride,
     setRide,
-    location,
-    setLocation,
+    locationRef,
     handlePlaceSearch,
     selectSuggestion,
     handleBlur
 }) => {
 
   const dispatch = useDispatch();
-  const id = useSelector(ID);
   const actorState = useSelector(ACTOR_STATE);
   const user = useSelector(USER);
 
-  
   const handleStateChange = useCallback((newState) => {
     dispatch(updateUserWorkflowState(newState));
   }, [dispatch, updateUserWorkflowState]);     
 
     const isMatching = actorState === "MATCHING";
-    const isDriverFound = actorState === "WAITING_FOR_DRIVER";
+    const isWaitingForDriver = actorState === "WAITING_FOR_DRIVER";
     const isOnTrip = actorState === USER_STATES.ON_TRIP;
-    const isFrozen = isMatching || isDriverFound || isOnTrip; // Freeze inputs during these states
-    // const [isFrozen, setIsFrozen] = useState(false);
+    const isFrozen = isMatching || isWaitingForDriver || isOnTrip;
 
-    const [booking, setBooking] = useState({
-        status: "",
-        findingDriver: (actorState === "MATCHING") || false,
-        matchedDriver: (actorState === "WAITING_FOR_DRIVER") || null
-    });
-
-    // Destructure for cleaner JSX usage
-    // const { pickupQuery, dropQuery, pickupSuggestions, dropSuggestions } = search;
     const [pickupQuery, setPickupQuery] = useState(search.pickupQuery || "");
     const [dropQuery, setDropQuery] = useState(search.dropQuery || "");
     const pickupSuggestions = search.pickupSuggestions || [];
     const dropSuggestions = search.dropSuggestions || [];
     const { rideTypeId, distanceKm, estimatedFare, etaMin } = ride;
-    const { pickup, drop } = location;
+    const { pickup, drop } = locationRef.current || {};
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [rideId, setRideId] = useState(null);
 
-    const [toast, setToast] = useState({ show: false, message: 'i am message', type: 'info' });
+    const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
 
-    const chosenRide = RIDE_TYPES.find((r) => r.id === ride.rideTypeId) || RIDE_TYPES[2];
-
-    // Helper to reset specifically the search/drop fields
+    // Helper to reset search and clear location ref drop/routePath
     const handleReset = () => {
         setSearch(prev => ({
             ...prev,
             dropQuery: "",
             dropSuggestions: []
         }));
-        // Note: You may need to pass a setLocation prop if you want to nullify drop/routePath here
+        setDropQuery("");
+        if (locationRef.current) {
+            locationRef.current.drop = null;
+            locationRef.current.routePath = null;
+        }
     };
 
-    // E. Request Ride API Call
+    // Request Ride API Call reading directly from locationRef.current
     const requestRide = async () => {
-        if (!location.pickup || !location.drop) {
-            setBooking(prev => ({ ...prev, status: "Please set pickup and drop locations." }));
+        const currentLocation = locationRef.current || {};
+        const pickup = currentLocation.pickup;
+        const drop = currentLocation.drop;
+
+        if (!pickup || !drop) {
+            setToast({
+                show: true,
+                message: "Please set pickup and drop locations.",
+                type: "warning"
+            });
             return;
         }
 
         const body = {
-            startAddress: location.pickup.label,
-            startLat: String(location.pickup.lat),
-            startLng: String(location.pickup.lng),
-            endAddress: location.drop.label,
-            endLat: String(location.drop.lat),
-            endLng: String(location.drop.lng),
+            startAddress: pickup.label,
+            startLat: String(pickup.lat),
+            startLng: String(pickup.lng),
+            endAddress: drop.label,
+            endLat: String(drop.lat),
+            endLng: String(drop.lng),
             rideType: ride.rideTypeId,
             userId: user?.id,
             userMobNo: user?.mobileNo,
             name: user?.name,
-            fare : estimatedFare
+            fare: estimatedFare
         };
 
         try {
             const response = await BackendService(ApiEndpoints.requestRide, body);
             if (response.data) {
-                setBooking({
-                    status: "Searching for nearby drivers...",
-                    findingDriver: true,
-                    matchedDriver: null
-                });
                 handleStateChange("MATCHING");
-                setRideId(response.data); // Store rideId for potential cancellation                
-
+                setRideId(response.data);
             }
-        } catch (e) {
-            setBooking(prev => ({ ...prev, status: "Failed to request ride. Try again." }));
+        } catch (error) {
+            setToast({
+                show: true,
+                message: error.response?.data?.message || "Failed to request ride. Try again.",
+                type: "error",
+            });
         }
     };
 
@@ -142,36 +137,45 @@ const SideBar = React.memo(({
                     lat: parseFloat(rideData.startLat),
                     lng: parseFloat(rideData.startLng),
                     label: rideData.startAddress
-                }
+                };
                 const responseDrop = {
                     lat: parseFloat(rideData.endLat),
                     lng: parseFloat(rideData.endLng),
                     label: rideData.endAddress
+                };
+
+                // Safely update specific properties on locationRef.current
+                if (locationRef.current) {
+                    locationRef.current.pickup = responsePickUp;
+                    locationRef.current.drop = responseDrop;
                 }
-                setLocation(prev => ({
-                    ...prev,
-                    pickup: responsePickUp,
-                    drop: responseDrop
-                }));
+
                 setPickupQuery(responsePickUp.label);
                 setDropQuery(responseDrop.label);
-                setRideId(rideData.rideId); // Store rideId for potential cancellation
+                setRide(prev => ({
+                    ...prev,
+                    driverId: rideData.driverId,
+                    status: rideData.status,
+                    userId: rideData.userId
+                }));
+                setRideId(rideData.rideId);
             }
-        } catch (e) {
-            setBooking(prev => ({ ...prev, status: "Failed to fetch ride details." }));
+        } catch (error) {
+            setToast({
+                show: true,
+                message: error.response?.data?.message || "Failed to restore ride details.",
+                type: "error",
+            });
         }
-
-    }
+    };
 
     useEffect(() => {
         if (isFrozen && rideId == null) {
             fetchRideDetails();
         }
-
     }, [isFrozen, rideId]);
 
     const [pin, setPin] = useState(null);
-    const [estimateTimeToDriverArrival, setEstimateTimeToDriverArrival] = useState("-");
 
     const fetchPin = async () => {
         try {
@@ -185,10 +189,10 @@ const SideBar = React.memo(({
     };
 
     useEffect(() => {
-        if (isDriverFound && pin == null && rideId != null) {
+        if (isWaitingForDriver && pin == null && rideId != null) {
             fetchPin();
         }
-    }, [isDriverFound, rideId]);
+    }, [isWaitingForDriver, rideId]);
 
     const debouncedPlaceSearch = useMemo(
         () => debounce((query, type) => {
@@ -198,7 +202,7 @@ const SideBar = React.memo(({
                 setSearch(prev => ({ ...prev, dropQuery: query }));
             }
             handlePlaceSearch(query, type);
-        }, 500), // 500ms delay
+        }, 500),
         []
     );
 
@@ -207,13 +211,8 @@ const SideBar = React.memo(({
         try {
             const response = await BackendService(ApiEndpoints.cancelRide, body);
             if (response.data) {
-                setBooking({
-                    status: "Ride request cancelled.",
-                    findingDriver: false,
-                    matchedDriver: null
-                });
                 setRideId(null);
-                handleStateChange("IDLE"); // Reset state to allow new bookings
+                handleStateChange("IDLE");
             }
             setToast({
                 show: true,
@@ -223,7 +222,7 @@ const SideBar = React.memo(({
         } catch (e) {
             console.error("Failed to cancel ride:", e);
         }
-    }
+    };
 
     useEffect(() => {
         return () => {
@@ -233,12 +232,12 @@ const SideBar = React.memo(({
 
     useEffect(() => {
         if (search.pickupQuery !== pickupQuery) {
-            setPickupQuery(search.pickupQuery);
+            setPickupQuery(search.pickupQuery || "");
         }
         if (search.dropQuery !== dropQuery) {
-            setDropQuery(search.dropQuery);
+            setDropQuery(search.dropQuery || "");
         }
-    }, [search])
+    }, [search]);
 
     return (
         <>
@@ -347,7 +346,7 @@ const SideBar = React.memo(({
                 {/* Action Buttons */}
 
                 {/* Dynamic Info Panel (PIN & ETA) */}
-                {isDriverFound && (
+                {isWaitingForDriver && (
                     <div className="ride-info-card">
                         <div className="info-item">
                             <span className="info-label">RIDE PIN</span>
@@ -360,7 +359,14 @@ const SideBar = React.memo(({
                     </div>
                 )}
 
-                {/* SDE3: Action Logic implementation */}
+                {isOnTrip && (
+                    <div className="ride-info-card">
+                        <div className="info-item">
+                            <span className="info-label">ON Trip</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="rd-cta-row">
                     {/* Phase 1: IDLE STATE */}
                     {!isFrozen && (
@@ -387,10 +393,10 @@ const SideBar = React.memo(({
                     )}
 
                     {/* Phase 3: WAITING FOR DRIVER (Found) */}
-                    {isDriverFound && (
+                    {isWaitingForDriver && (
                         <div className="rd-cta-row">
                             {/* Phase 3: WAITING FOR DRIVER */}
-                            {isDriverFound && (
+                            {isWaitingForDriver && (
                                 <>
                                     <button className="btn-success-fixed" disabled>
                                         <span>✓</span> Driver Found!

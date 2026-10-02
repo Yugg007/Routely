@@ -25,8 +25,10 @@ const DriverTripCompleteModal = ({ isOpen, ride, totalFare = "0.00", onTripCompl
       // Send the paymentMethod so the backend knows how the money was collected
       const payload = { 
         rideId: ride.rideId, 
+        driverId: ride.driverId,
+        userId: ride.userId,
         paymentMethod, 
-        amountReceived: totalFare 
+        amountReceived: totalFare
       };
       
       const response = await BackendService(ApiEndpoints.completeRide, payload);

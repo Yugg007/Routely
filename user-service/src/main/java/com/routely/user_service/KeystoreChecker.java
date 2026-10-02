@@ -22,14 +22,14 @@ public class KeystoreChecker implements ApplicationRunner {
         System.out.println("SYS javax.net.ssl.keyStorePassword= " + System.getProperty("javax.net.ssl.keyStorePassword"));
         System.out.println("SPRING server.ssl.key-store       = " + env.getProperty("server.ssl.key-store"));
         System.out.println("SPRING server.ssl.key-store-password = " + env.getProperty("server.ssl.key-store-password"));
-        System.out.println("classpath keystore exists?        = " + new ClassPathResource("eureka-server-keystore.p12").exists());
+        System.out.println("classpath keystore exists?        = " + new ClassPathResource("routely.p12").exists());
 
         // Truststore checks
         System.out.println("SYS javax.net.ssl.trustStore        = " + System.getProperty("javax.net.ssl.trustStore"));
         System.out.println("SYS javax.net.ssl.trustStorePassword= " + System.getProperty("javax.net.ssl.trustStorePassword"));
         System.out.println("SPRING server.ssl.trust-store       = " + env.getProperty("server.ssl.trust-store"));
         System.out.println("SPRING server.ssl.trust-store-password = " + env.getProperty("server.ssl.trust-store-password"));
-        System.out.println("classpath truststore exists?        = " + new ClassPathResource("eureka-server-truststore.p12").exists());
+        System.out.println("classpath truststore exists?        = " + new ClassPathResource("truststore.p12").exists());
 
         System.out.println("===================================");
     }

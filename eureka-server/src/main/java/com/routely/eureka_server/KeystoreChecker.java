@@ -13,6 +13,6 @@ public class KeystoreChecker implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         System.out.println("SYS javax.net.ssl.keyStore = " + System.getProperty("javax.net.ssl.keyStore"));
         System.out.println("SPRING server.ssl.key-store = " + env.getProperty("server.ssl.key-store"));
-        System.out.println("classpath keystore exists? " + new org.springframework.core.io.ClassPathResource("eureka-server-keystore.p12").exists());
+        System.out.println("classpath keystore exists? " + new org.springframework.core.io.ClassPathResource("routely.p12").exists());
     }
 }

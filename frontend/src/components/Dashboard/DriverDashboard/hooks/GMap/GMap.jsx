@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, Marker, DirectionsRenderer, useJsApiLoader } from "@react-google-maps/api";
 import Constants from '../../../../../constants/Constant';
+import Data from '../../../../../constants/Data';
+import { haversineDistanceKm } from '../../../Functionality';
 import "./GMap.css";
 const DriverMapLibraries = Constants.MAP_LIBRARYS;
+const FALLBACK_MAP_CENTER = Data.USER_FALLBACK;
 
 const GMap = ({ currentPosition, activeDestination }) => {
     const [directionsResponse, setDirectionsResponse] = useState(null);
     const [isFollowMode, setIsFollowMode] = useState(true);
     const mapRef = useRef(null);
+    const lastRouteRequestRef = useRef(null);
 
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -16,10 +20,28 @@ const GMap = ({ currentPosition, activeDestination }) => {
 
     // Fetch Route Logic
     const calculateRoute = useCallback(async () => {
-        if (!isLoaded || !currentPosition?.lat || !activeDestination?.lat) {
+        const hasCurrentPosition = Number.isFinite(currentPosition?.lat) && Number.isFinite(currentPosition?.lng);
+        const hasDestination = Number.isFinite(activeDestination?.lat) && Number.isFinite(activeDestination?.lng);
+
+        if (!isLoaded || !hasCurrentPosition || !hasDestination) {
             setDirectionsResponse(null);
             return;
         }
+
+        const destinationKey = `${activeDestination.lat},${activeDestination.lng}`;
+        const previousRequest = lastRouteRequestRef.current;
+        if (
+            previousRequest?.destinationKey === destinationKey &&
+            haversineDistanceKm(
+                previousRequest.origin.lat,
+                previousRequest.origin.lng,
+                currentPosition.lat,
+                currentPosition.lng,
+            ) < 0.15
+        ) {
+            return;
+        }
+        lastRouteRequestRef.current = { origin: currentPosition, destinationKey };
 
         const directionsService = new window.google.maps.DirectionsService();
         try {
@@ -32,7 +54,7 @@ const GMap = ({ currentPosition, activeDestination }) => {
         } catch (error) {
             console.warn("Route failed:", error);
         }
-    }, [isLoaded, activeDestination?.lat, currentPosition?.lat]);
+    }, [isLoaded, activeDestination?.lat, activeDestination?.lng, currentPosition?.lat, currentPosition?.lng]);
 
     useEffect(() => { calculateRoute(); }, [calculateRoute]);
 
@@ -70,7 +92,7 @@ const GMap = ({ currentPosition, activeDestination }) => {
                 mapContainerClassName="map-container"
                 onLoad={(map) => (mapRef.current = map)}
                 onDragStart={onDragStart} // Detect when driver manually moves map
-                center={currentPosition}
+                center={currentPosition || FALLBACK_MAP_CENTER}
                 zoom={15}
                 options={{
                     disableDefaultUI: true,
@@ -79,19 +101,21 @@ const GMap = ({ currentPosition, activeDestination }) => {
                     styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
                 }}
             >
-                <Marker
-                    position={currentPosition}
-                    label={{
-                        text: "🚗",
-                        fontSize: "24px"
-                    }}
-                    icon={{
-                        url: "/car-icon.png",
-                        scaledSize: new window.google.maps.Size(40, 40),
-                        anchor: new window.google.maps.Point(20, 20),
-                    }}
-                    zIndex={10}
-                />
+                {currentPosition && (
+                    <Marker
+                        position={currentPosition}
+                        label={{
+                            text: "🚗",
+                            fontSize: "24px"
+                        }}
+                        icon={{
+                            url: "/car-icon.png",
+                            scaledSize: new window.google.maps.Size(40, 40),
+                            anchor: new window.google.maps.Point(20, 20),
+                        }}
+                        zIndex={10}
+                    />
+                )}
 
                 {activeDestination?.lat && (
                     <Marker
@@ -114,6 +138,12 @@ const GMap = ({ currentPosition, activeDestination }) => {
                     />
                 )}
             </GoogleMap>
+
+            {!currentPosition && (
+                <div className="gps-status-pill" role="status">
+                    Waiting for your location
+                </div>
+            )}
 
             {/* Recenter Button Overlay */}
             {!isFollowMode && (

@@ -17,7 +17,7 @@ const ApiEndpoints = {
 
     // Driver Perspective
     "acceptRide" : "/trips/driver/acceptRide",
-    "completeRide" : "/trips/completeRide",
+    "completeRide" : "/trips/driver/completeRide",
     "getTripHistory" : "/trips/getTripHistory",
     "getActiveTrips" : "/trips/getActiveTrips",
     "driverRideDetails" : "/trips/driver/rideDetails",

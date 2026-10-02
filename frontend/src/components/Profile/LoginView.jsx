@@ -56,10 +56,8 @@ export default function LoginView() {
             setLoading(true);
             const url = forLogin ? ApiEndpoints.login : ApiEndpoints.register;
             const body = forLogin ? { email, password } : { mobileNo, email, password, name, isDriver };
-            console.log("Body for auth - ", body);
             const response = await BackendService(url, body);
             if (response.data.authStatus) {
-                console.log("Auth response - ", response.data);
                 dispatch(setAuthSession(response.data));
             }
         } catch (err) {

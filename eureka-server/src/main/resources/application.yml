@@ -2,13 +2,17 @@ server:
   port: 8761
   ssl:
     enabled: true
-    key-store: src/main/resources/eureka-server-keystore.p12
-    key-store-password: <password>
+    # FIX 1: Use 'classpath:' instead of 'src/main/resources/' so it works inside a JAR/Docker
+    key-store: classpath:routely.p12
+    # FIX 2: Corrected password from 'iampass' to 'routely123'
+    key-store-password: routely123
     key-store-type: PKCS12
-    key-alias: eureka-server
-    trust-store: src/main/resources/truststore.p12
-    trust-store-password: <password>
-    trust-store-type: PKCS12		
+    key-alias: routely
+    key-password: routely123 # Added explicitly
+    
+    trust-store: classpath:truststore.p12
+    trust-store-password: routely123
+    trust-store-type: PKCS12
 
 spring:
   application:
@@ -22,9 +26,22 @@ eureka:
     non-secure-port-enabled: false
     prefer-ip-address: false
     instance-id: ${spring.application.name}:${server.port}
+    
+    # IMPROVEMENT: Explicitly tell clients to use HTTPS for internal dashboard status endpoints
+    secure-virtual-host-name: ${spring.application.name}
+    home-page-url: https://${eureka.instance.hostname}:${server.port}/
+    status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+    health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
 
   client:
-    register-with-eureka: false   # server itself doesn’t register
+    register-with-eureka: false   
     fetch-registry: false
     service-url:
-      defaultZone: https://localhost:8761/eureka/
+      defaultZone: https://${eureka.instance.hostname}:${server.port}/eureka/
+      
+  server:
+    response-cache-update-interval-ms: 2000
+    use-read-only-response-cache: false
+    # IMPROVEMENT: Lowered self-preservation threshold for rapid local dev testing (Optional)
+    renewal-percent-threshold: 0.85
+    eviction-interval-timer-in-ms: 50000

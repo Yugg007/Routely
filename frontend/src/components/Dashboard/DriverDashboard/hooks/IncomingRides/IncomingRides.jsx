@@ -1,6 +1,12 @@
 import React from 'react';
+import "./IncomingRides.css";
 
-const IncomingRides = ({ incomingRides = [], onAccept, onDecline }) => {
+const IncomingRides = ({
+  incomingRides = [],
+  onAccept,
+  onDecline,
+  acceptingRideId,
+}) => {
   if (incomingRides.length === 0) {
     return (
       <div className="no-rides-state">
@@ -15,57 +21,59 @@ const IncomingRides = ({ incomingRides = [], onAccept, onDecline }) => {
       <div className="incoming-rides-grid">
         {incomingRides.map((ride) => (
           <div key={ride.rideId} className="incoming-ride-card">
-            
-            {/* 1. Header with Name and Badge */}
-            <div className="card-header">
+            <div className="incoming-card-header">
               <div className="user-info">
-                <p className="passenger-name">User name : {ride.name}</p>
-                <p className={`ride-type-badge ${ride.rideType}`}>
-                  Ride Type : {ride.rideType.toUpperCase()}
+                <p className="passenger-name">{ride.name || "Passenger"}</p>
+                <p className={`ride-type-badge ${ride.rideType || "ride"}`}>
+                  {ride.rideType?.toUpperCase() || "RIDE"}
                 </p>
-              <div className="fare-display">Fare : ₹{ride.fare}</div>
+              </div>
+              <div className="fare-display">
+                <span>FARE</span>
+                <strong>₹{ride.fare ?? "--"}</strong>
               </div>
             </div>
             
             <div className="card-body">
-              {/* 2. Visual Track with Address logic */}
               <div className="location-track">
                 <div className="track-icons">
-                  {/* <div className="dot start"></div>
+                  <div className="dot start"></div>
                   <div className="line"></div>
-                  <div className="dot end"></div> */}
+                  <div className="dot end"></div>
                 </div>
                 <div className="track-details">
                   <div className="location-point">
                     <label>PICKUP</label>
-                    <p className="address-text">{ride.startAddress}</p>
+                    <p className="address-text">{ride.startAddress || "Pickup location"}</p>
                   </div>
                   <div className="location-point">
                     <label>DESTINATION</label>
-                    <p className="address-text">{ride.endAddress}</p>
+                    <p className="address-text">{ride.endAddress || "Destination"}</p>
                   </div>
                 </div>
               </div>
 
-              {/* 3. New: Contact Info Row */}
-              <div className="contact-info">
-                <span>📞 {ride.userMobNo}</span>
-              </div>
+              {ride.userMobNo && (
+                <a className="incoming-contact" href={`tel:${ride.userMobNo}`}>
+                  {ride.userMobNo}
+                </a>
+              )}
             </div>
 
-            {/* 4. Action Buttons passed from parent */}
             <div className="card-actions">
-              <button 
-                className="btn-decline" 
-                onClick={() => onDecline(ride)}
+              <button
+                className="btn-decline"
+                onClick={() => onDecline?.(ride)}
+                disabled={Boolean(acceptingRideId)}
               >
                 Decline
               </button>
-              <button 
-                className="btn-accept" 
-                onClick={() => onAccept(ride)}
+              <button
+                className="btn-accept"
+                onClick={() => onAccept?.(ride)}
+                disabled={Boolean(acceptingRideId)}
               >
-                Accept & Go
+                {acceptingRideId === ride.rideId ? "Accepting..." : "Accept ride"}
               </button>
             </div>
           </div>

@@ -43,45 +43,68 @@ This repository contains the complete application stack for a ride-sharing-style
 
 ## System Architecture
 
+The frontend communicates only through the API Gateway. The gateway is the single public entry point for web clients and resolves downstream service locations from Eureka before forwarding traffic. The User Service, Trip Service, and WebSocket Service all register themselves with Eureka, and the gateway uses that registry to discover the active instances for each request.
+
+Inside the backend, the services communicate through a pub/sub model using Kafka. Ride events, user state changes, location updates, and trip transitions are published to topics and consumed by interested services. Redis is used for fast access to session data, ride state, driver locations, and other real-time operational data that must be queried frequently.
+
 ```text
-┌───────────────────────┐
-│      Frontend         │
-│   React + Vite        │
-└───────────┬───────────┘
-            │ HTTPS / REST
-            ▼
-┌───────────────────────┐
-│   API Gateway          │
-│ Spring Cloud Gateway   │
-│ JWT auth / routing     │
-└───────┬───────┬───────┘
-        │       │
-        │       ├───────────────► Eureka Server
-        │                       │
-        ▼                       │
-┌───────────────────────┐       │
-│ User Service          │       │
-│ Auth / accounts       │       │
-│ MySQL + Redis         │       │
-└───────────┬───────────┘       │
-            │                   │
-            ├──────────────► Kafka
-            │
-            ▼
-┌───────────────────────┐
-│ Trip Service          │
-│ Ride lifecycle        │
-│ MySQL + Redis         │
-└───────────┬───────────┘
-            │
-            ├──────────────► Kafka
-            │
-            ▼
-┌───────────────────────┐
-│ WebSocket Service     │
-│ Live ride updates     │
-│ Driver/rider channels │
-└───────────────────────┘
+┌──────────────────────────────┐
+│        Frontend             │
+│    React + Vite UI          │
+└──────────────┬──────────────┘
+               │
+               │ HTTPS / REST only
+               ▼
+┌──────────────────────────────┐
+│       API Gateway            │
+│  Spring Cloud Gateway        │
+│  JWT validation + routing    │
+│  queries Eureka for targets  │
+└──────────────┬──────────────┘
+               │
+               │ service discovery via Eureka
+               ▼
+┌──────────────────────────────┐
+│          Eureka Server       │
+│  service registry / discovery│
+└──────────────┬──────────────┘
+               │
+      ┌────────┼────────┬────────┐
+      │        │        │        │
+      ▼        ▼        ▼        ▼
+┌────────────┐ ┌────────────┐ ┌──────────────┐
+│ User       │ │ Trip       │ │ WebSocket    │
+│ Service    │ │ Service    │ │ Service      │
+│ registers  │ │ registers  │ │ registers    │
+│ on Eureka  │ │ on Eureka  │ │ on Eureka    │
+└─────┬──────┘ └─────┬──────┘ └──────┬───────┘
+      │               │                │
+      └───────────────┼────────────────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │   Kafka      │
+              │ Pub/Sub bus  │
+              │ ride events  │
+              │ state updates│
+              │ locations   │
+              └──────┬───────┘
+                     │
+         ┌───────────────┼───────────────┐
+         │               │               │
+         ▼               ▼               ▼
+ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+ │ Redis         │ │ Redis         │ │ Redis         │
+ │ User state    │ │ Ride state    │ │ Location      │
+ │ session data  │ │ pending rides│ │ driver geo    │
+ └──────────────┘ └──────────────┘ └──────────────┘
+
+Notes:
+- Frontend never calls User/Trip/WebSocket services directly.
+- Gateway resolves service instances through Eureka before forwarding requests.
+- User, Trip, and WebSocket services exchange real-time business events via Kafka.
+- Redis is the fast-access store for ride, user, and location state.
+- WebSocket service also provides live socket connections for clients.
 ```
 
 ## Core Features
@@ -108,8 +131,6 @@ Routely/
 ├── trip-service/               # Ride/trip orchestration
 ├── user-service/               # Authentication and user logic
 ├── websocket-service/           # Real-time ride communication
-├── ssl/                        # SSL/certificate assets
-├── files/                     # Docker and helper artifacts
 ├── docker-compose.yml          # Full stack local environment
 ├── .gitignore
 ├── .env.example (if present in your environment)
@@ -246,12 +267,13 @@ Typical defaults are defined in the compose file, but for production use you sho
 
 ## Typical Ride Flow
 
-1. A rider signs in and creates a ride request.
-2. The request is processed by the Trip Service.
-3. Nearby drivers are identified using Redis geo data and live location updates.
-4. Ride offers and acceptances are exchanged through messaging and WebSockets.
-5. The trip progresses through states such as acceptance, pickup, and completion.
-6. Final ride events are published and consumed across services.
+1. A rider signs in through the frontend and sends the request to the API Gateway.
+2. The gateway resolves the correct service instance from Eureka and routes the request to the User or Trip Service as needed.
+3. The Trip Service validates the ride request and stores or updates ride state in Redis.
+4. Driver location data and ride-related state are maintained in Redis for fast matchmaking and tracking.
+5. User, Trip, and WebSocket services publish and consume Kafka events for ride requests, offers, acceptances, cancellations, and trip lifecycle changes.
+6. The WebSocket Service streams live updates to connected rider and driver clients in real time.
+7. Trip completion, status transitions, and final state updates are persisted and emitted back through the event pipeline.
 
 ## Common Commands
 
